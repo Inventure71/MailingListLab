@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html xmlns:fb="http://ogp.me/ns/fb#">
+<head prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb# zoomvideocall: http://ogp.me/ns/fb/zoomvideocall#">
+<meta charset="utf-8">
+<meta name="referrer" content="origin-when-cross-origin">
+<meta http-equiv="X-UA-Compatible" content="IE=edge,Chrome=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1.0">
+<meta name="keywords" content="zoom, zoom.us, video conferencing, video conference, online meetings, web meeting, video meeting, cloud meeting, cloud video, group video call, group video chat, screen share, application share, mobility, mobile collaboration, desktop share, video collaboration, group messaging">
+<meta name="description" content="Zoom is the leader in modern enterprise video communications, with an easy, reliable cloud platform for video and audio conferencing, chat, and webinars across mobile, desktop, and room systems. Zoom Rooms is the original software-based conference room solution used around the world in board, conference, huddle, and training rooms, as well as executive offices and classrooms. Founded in 2011, Zoom helps businesses and organizations bring their teams together in a frictionless environment to get more done. Zoom is a publicly traded company headquartered in San Jose, CA.">
+<meta name="robots" content="noindex,nofollow,noarchive">
+<meta property="og:type" content="activity">
+<meta property="og:title" content="Join our Cloud HD Video Meeting">
+<meta property="og:description" content="Zoom is the leader in modern enterprise video communications, with an easy, reliable cloud platform for video and audio conferencing, chat, and webinars across mobile, desktop, and room systems. Zoom Rooms is the original software-based conference room solution used around the world in board, conference, huddle, and training rooms, as well as executive offices and classrooms. Founded in 2011, Zoom helps businesses and organizations bring their teams together in a frictionless environment to get more done. Zoom is a publicly traded company headquartered in San Jose, CA.">
+<meta property="og:url" content="https://plymouth.zoom.us/j/95753314935?pwd=B9cuV9Dj6MWkhgrWEZrGsVz9brL21Q.1">
+<meta property="og:site_name" content="Zoom Video">
+<meta property="fb:app_id" content="113289095462482">
+<meta property="twitter:account_id" content="522701657">
+<title>Launch Meeting - Zoom</title>
+<script nonce="vpoUOitIRv2m3lmt7C1bBQ">
+window.launchBase64 = "GsoCCkwIABAAGAEgACogaG1iamJqZHBrb2JkanBsZm9iaGxqbmRmZGZkaXBqaGcyIGZjcG9jZ2xhYm9naGZraWhqYmFpbmRmYWZwZmliY2hvEvcBCAASB3pvb20udXMYACAAKAEwADjgpxJCGis0NDEzMTQ2MDExOTYsOTU3NTMzMTQ5MzUjQhorNDQyMDM0ODE1MjM3LDk1NzUzMzE0OTM1I0IaKzQ0MjAzNDgxNTI0MCw5NTc1MzMxNDkzNSNCGis0NDIwMzkwMTc4OTUsOTU3NTMzMTQ5MzUjQhorNDQyMDgwODA2NTkxLDk1NzUzMzE0OTM1I0IaKzQ0MjA4MDgwNjU5Miw5NTc1MzMxNDkzNSNCGis0NDMzMDA4ODU4MzAsOTU3NTMzMTQ5MzUjSgJHQmIAaAB4AYABAIgBAZABAZgBAaABAagBADIAIsAQCjBodHRwczovL2xvZy1nYXRld2F5Lnpvb20udXMvbndzL2pvaW4vbG9nZ2VyL3dqbWYSABpmaHR0cHM6Ly9wbHltb3V0aC56b29tLnVzL3djL2pvaW4vOTU3NTMzMTQ5MzU/ZnJvbVBXQT0xJmZyb209YWRkb24mcHdkPUI5Y3VWOURqNk1Xa2hncldFWnJHc1Z6OWJyTDIxUS4xIv8EaHR0cHM6Ly9wbHltb3V0aC56b29tLnVzL2xhdW5jaC9kb3dubG9hZC9YZmExNzJwYlRJdDBkSlVUYUlHbDZjc3hiOEpiVEJiY1g5WFpUWEY5ZzYtZ0diY3pRLW44S25xcjNpczNLSEhpeC1mc3BJakloNFFXbGRuUS1scEwweWpCQ1RueHZ2c2ZHbHQyNXlWWGgzRmJ0ZXRfRTR0TmwzWTlzMnh6aE51dzVYV0kzR25PVUF4WTZzTTQ5M3BsWlQ3UEh6RnBRZC12anNXb0hqRjY3MDFuZmZfZ0tJLUVGMVRaQjlUbUhka1Y3MzVVOXB5VEZpUUF5aURzNlF5SG5JcTU1THZScDYyTlV2cDl5a3ctYm5wcHlHeF9QSjdYT1o5RnpVNDBHTWxFQm9STExXSFpjQkZ6QUVaUTZFeWttbEZiTU5ILWJMSEZxRDBtZy16V3VmNW9uRnA1TEJjd3NzRlhGOW1xbWd0VDlxU1RSVGMtNTZMZVlocnVqRkpEdHBTTmlhLURUYW1Wdjl6R09WNmYyQ1Q4YlhodFEyZEpvYnJqWHpOeW5QaFZGQmdPMW5BWE9mOHMyUFZrUzRuRTJlSjlDbkZWZWZUaVlLcHFXZFRPRHIzWlgydnhJTFpHSURNUDBkcnNUVXcyNDJJQmdXYk1BWERhZkNCWWV0R25XenppaXRhTHlRMVV1eGV4bTNZUFlwdHVILWVJVlRTTUxmVy11YkF1dTFpTWpVTkI4d0UudjZDV0d3cnA0Y2VzZUtRUC9tZWV0aW5nL2pBRDJBUEUzVmVGLUFKbzRkM01WLTZGVVVyMENuNDl3UFpJNC5CeEdXUHFtR3dWSHctWGtWKhFab29tX2xhdW5jaGVyLmV4ZTovaXRtcy1hcHBzOi8vaXR1bmVzLmFwcGxlLmNvbS91cy9hcHAvaWQ1NDY1MDUzMDdCIWh0dHBzOi8vcGx5bW91dGguem9vbS51cy9kb3dubG9hZEo4aHR0cHM6Ly9wbHltb3V0aC56b29tLnVzL2NsaWVudC9sYXRlc3QvWm9vbUluc3RhbGxlci5leGVSQmh0dHBzOi8vcGx5bW91dGguem9vbS51cy9jbGllbnQvNS4wLjI2MjEzLjA2MDIvWm9vbUluc3RhbGxlclhQLmV4ZVovaHR0cHM6Ly9wbHltb3V0aC56b29tLnVzL2NsaWVudC9sYXRlc3QvWm9vbS5wa2diRmh0dHBzOi8vcGx5bW91dGguem9vbS51cy9jbGllbnQvMy42LjEwODI2LjExMDEvem9vbXVzSW5zdGFsbGVyRnVsbC5wa2dqRmh0dHBzOi8vcGx5bW91dGguem9vbS51cy9jbGllbnQvNC4xLjM1Mzc0LjEyMTcvem9vbXVzSW5zdGFsbGVyRnVsbC5wa2dyRmh0dHBzOi8vcGx5bW91dGguem9vbS51cy9jbGllbnQvNC4xLjM1Mzc0LjEyMTcvem9vbXVzSW5zdGFsbGVyRnVsbC5wa2d6Q2h0dHBzOi8vcGxheS5nb29nbGUuY29tL3N0b3JlL2FwcHMvZGV0YWlscz9pZD11cy56b29tLnZpZGVvbWVldGluZ3OCAS9odHRwczovL3BseW1vdXRoLnpvb20udXMvY2xpZW50L2xhdGVzdC96b29tLmFwa4oBOWh0dHBzOi8vcGx5bW91dGguem9vbS51cy9jbGllbnQvNC41LjU2OTkuMTAyNy96b29tNS4wLmFwa5IBSmh0dHBzOi8vYXBwLnpvb20udXMvd2M/bW49OTU3NTMzMTQ5MzUmcHdkPUI5Y3VWOURqNk1Xa2hncldFWnJHc1Z6OWJyTDIxUS4xsgFOCgQxMC42EkZodHRwczovL3BseW1vdXRoLnpvb20udXMvY2xpZW50LzMuNi4xMDgyNi4xMTAxL3pvb211c0luc3RhbGxlckZ1bGwucGtnsgFOCgUxMC4xMRJFaHR0cHM6Ly9wbHltb3V0aC56b29tLnVzL2NsaWVudC81LjE2LjEwLjI1Njg5L3pvb211c0luc3RhbGxlckZ1bGwucGtnsgFOCgUxMC4xMBJFaHR0cHM6Ly9wbHltb3V0aC56b29tLnVzL2NsaWVudC81LjE0LjEwLjE5MjAyL3pvb211c0luc3RhbGxlckZ1bGwucGtnsgFOCgUxMC4xMhJFaHR0cHM6Ly9wbHltb3V0aC56b29tLnVzL2NsaWVudC81LjE2LjEwLjI1Njg5L3pvb211c0luc3RhbGxlckZ1bGwucGtnsgFLCgQxMC45EkNodHRwczovL3BseW1vdXRoLnpvb20udXMvY2xpZW50LzUuMTAuNC42NTkyL3pvb211c0luc3RhbGxlckZ1bGwucGtnsgFOCgQxMC44EkZodHRwczovL3BseW1vdXRoLnpvb20udXMvY2xpZW50LzQuMS4zNDgwMS4xMTE2L3pvb211c0luc3RhbGxlckZ1bGwucGtnsgFOCgQxMC43EkZodHRwczovL3BseW1vdXRoLnpvb20udXMvY2xpZW50LzQuMS4zNTM3NC4xMjE3L3pvb211c0luc3RhbGxlckZ1bGwucGtnKvUCCPPL9fjRMhoQcGx5bW91dGguem9vbS51cyIEam9pbirTAgoYVXB4dGVVMzZSVUNaSkhsQkZNVFp1dz09EPfE3trkAhogQjljdVY5RGo2TVdraGdyV0VackdzVno5YnJMMjFRLjEyAGoEam9pbnAAeg8wLjkyLjExMjI3LjA5MjmCAQCKAaMBa2dsQzlxN3luRGg3QWotWUJUMTluNzBJeDFyX0UxTmZMZmRoZm02VlpoVVJfYXNJUHozdWx2QUhGOTlPb1FlaFBkdTdtNEd6MTVFM2FnM1RmWHh3ZjhXeGZIcm1KN3UwbjBQUFNib3lpeFJOT1dVSHJJR1dyWURqQ2ZJVHRqTE1HOGFaMUdGNkF6UXJaOTczLUEucnZpRGIydTJFb09YdFM2Z5IBIGRhNmUxM2RkOWNhYTRjOGE4NDk5ODMyZjRiZTMwNzg30gElVVRJRF81ODdkNjU3Y2I5ZjQ0NTI4OTI4ZTBkZGU4NDUyMDA4ZQ==";
+</script>
+<link rel="shortcut icon" href="https://st1.zoom.us/zoom.ico">
+</head>
+<body>
+<script nonce="vpoUOitIRv2m3lmt7C1bBQ" src="https://st1.zoom.us/fe-static/launch-meeting/meeting.a80ce84ab3be18f8c06b.js"></script>
+<script nonce="vpoUOitIRv2m3lmt7C1bBQ">
+var __launch_fallback_domains__ = (function () {
+var ret = [];
+ret.push("https://st1.zoom.us");
+ret.push("https://gstatic.zoom.us");
+return ret;
+})();
+function __launch_load_js__(url, events) {
+var sc = document.createElement("script");
+sc.onload = events && events.onload;
+sc.src = url;
+document.getElementsByTagName("head")[0].appendChild(sc);
+}
+function __launch_fallback__(index) {
+if (document.getElementById("zoom-ui-frame")) {
+return;
+}
+var url = (function() {
+var domain = __launch_fallback_domains__[index];
+var path = "\/fe-static/launch-meeting/meeting.a80ce84ab3be18f8c06b.js";
+return domain && path && (domain + path);
+})();
+if (url) {
+__launch_load_js__(url);
+window.setTimeout(function() {__launch_fallback__((index + 1));}, 5000);
+}
+try {
+fetch('/wjmf', {
+method: 'POST',
+mode: 'no-cors',
+headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+body: new URLSearchParams({
+mn: '95753314935',
+mi: 'UpxteU36RUCZJHlBFMTZuw==',
+reason: 'launch_js_fallback',
+msg: index,
+ua: navigator.userAgent,
+ff: window.top !== window
+})
+});
+} catch (ex) {}
+}
+window.setTimeout(function() {__launch_fallback__(0);}, 300);
+</script>
+<script nonce="vpoUOitIRv2m3lmt7C1bBQ" type="text/javascript">
+window.useZVALazyLoadChatClient = true;
+</script>
+<script nonce="vpoUOitIRv2m3lmt7C1bBQ"
+type="text/javascript"
+src="https://us01ccistatic.zoom.us/us01cci/web-sdk/chat-client.js"
+data-apikey="AM_FKF55QOG_vdWum455Vg"
+data-lazy-load-campaign-url="_blank"
+async>
+</script>
+<script nonce="vpoUOitIRv2m3lmt7C1bBQ">
+__launch_load_js__('https://st3.zoom.us/static/6.3.31704/js/lib/fingerprintjs-3.3.3.min.js', {
+"onload": function() {
+try {
+if (window.FingerprintJS) {
+var fpPromise = window.FingerprintJS.load();
+fpPromise.then(function (fp) {
+return fp.get();
+}).then(function (result) {
+window.visitorInfo = result;
+var ue_cookie_time = new Date(Date.now() + 31536000000);
+document.cookie = "_zm_fingerprint" + "=" + result.visitorId + "; expires=" + ue_cookie_time + "; path=/; secure=true; domain=" + "zoom.us";
+})
+}
+} catch (ex) {
+}
+}
+});
+</script>
+</body>
+</html>

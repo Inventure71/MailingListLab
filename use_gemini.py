@@ -138,12 +138,13 @@ class GeminiHandler:
                     items=types.Schema(
                         type="OBJECT",
                         enum=[],  # No enum values.
-                        required=["source", "brief description", "linkToAricle", "relevancy"],
+                        required=["source", "brief description", "relevancy"],
                         properties={
                             "source": types.Schema(type="STRING"),
                             "brief description": types.Schema(type="STRING"),
                             "requirements": types.Schema(type="STRING"),
                             "linkToAricle": types.Schema(type="STRING"),
+                            "linkToMeeting": types.Schema(type="STRING"),
                             "relevancy": types.Schema(type="INTEGER"),
                             "location": types.Schema(type="STRING"),
                             "contact": types.Schema(type="STRING"),
@@ -170,6 +171,7 @@ class GeminiHandler:
                 "- Today is the 19/02/2025, so include only events that have not happened yet. "
                 "For the news, the exact date is not important.\n"
                 "- The main targets for the news are undergraduate, graduate, and master students."
+                "- Include the link to the article if available.\n"
             ),
         )
 

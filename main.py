@@ -71,7 +71,7 @@ def main():
 
         news_text = f"Source: {source}\n Description: {description}\n Link: {link}\n Relevancy: {relevancy}\n Location: {location}\n Contact: {contact}\n Requirements: {requirements}\n"
 
-        if link or len(link) > 5:
+        if link and len(link) > 5 and link != "Unknown":
             print("link:", link)
             input("Press Enter to continue...")
 

@@ -147,7 +147,8 @@ class GmailManager:
 
     def combine_unread_emails_text_in_period(self, start_date, end_date, max_results=100):
         """
-        Combines the text content of all unread emails within a specified time period.
+        Combines the text content of all unread emails within a specified period and
+        extracts all hyperlinks and image URLs from their HTML content.
 
         Parameters:
             start_date (str): The start date in "YYYY/MM/DD" format (inclusive).
@@ -155,15 +156,17 @@ class GmailManager:
             max_results (int): Maximum number of emails to process.
 
         Returns:
-            str: A single string containing the concatenated text content of all unread emails
-                 within the specified period.
+            dict: A dictionary with keys:
+                  - "text": Combined plain text from the emails.
+                  - "links": List of all unique hyperlinks extracted.
+                  - "images": List of all unique image URLs extracted.
         """
-        # Construct the Gmail query. For example: "is:unread after:2025/01/01 before:2025/01/31"
-        query = f"is:unread after:{start_date} before:{end_date}"
         combined_text = ""
+        combined_links = set()
+        combined_images = set()
 
+        query = f"is:unread after:{start_date} before:{end_date}"
         try:
-            # List unread messages matching the date range
             results = self.service.users().messages().list(
                 userId="me", q=query, maxResults=max_results
             ).execute()
@@ -171,18 +174,16 @@ class GmailManager:
 
             if not messages:
                 print("No unread messages found in this period.")
-                return combined_text
+                return {"text": "", "links": [], "images": []}
 
             for msg in messages:
-                # Retrieve the full email message
                 message = self.service.users().messages().get(
                     userId="me", id=msg["id"], format="full"
                 ).execute()
 
-                # Extract plain text and HTML content
                 plain_text, html_text = self.get_email_content(message.get("payload", {}))
 
-                # If plain text is missing, extract text from the HTML content.
+                # Use plain text if available; otherwise, extract text from HTML.
                 if not plain_text and html_text:
                     soup = BeautifulSoup(html_text, "html.parser")
                     email_text = soup.get_text()
@@ -191,11 +192,32 @@ class GmailManager:
 
                 combined_text += email_text.strip() + "\n\n"
 
-            return combined_text.strip()
+                # If there is HTML content, extract links and images.
+                if html_text:
+                    links, images = self.extract_links_and_images(html_text)
+                    combined_links.update(links)
+                    combined_images.update(images)
+
+                # Optionally, mark the message as read.
+                self.service.users().messages().modify(
+                    userId="me",
+                    id=msg["id"],
+                    body={"removeLabelIds": ["UNREAD"]}
+                ).execute()
+
+            return {
+                "text": combined_text.strip(),
+                "links": list(combined_links),
+                "images": list(combined_images)
+            }
 
         except HttpError as error:
             print(f"An error occurred: {error}")
-            return combined_text
+            return {
+                "text": combined_text.strip(),
+                "links": list(combined_links),
+                "images": list(combined_images)
+            }
 
     def send_email_from_html_file(self, to, subject, html_file_path, sender=None):
         """

@@ -143,6 +143,7 @@ class GeminiHandler:
                             "source": types.Schema(type="STRING"),
                             "brief description": types.Schema(type="STRING"),
                             "requirements": types.Schema(type="STRING"),
+                            "imageVideosLinks": types.Schema(type="STRING"),
                             "linkToAricle": types.Schema(type="STRING"),
                             "linkToMeeting": types.Schema(type="STRING"),
                             "relevancy": types.Schema(type="INTEGER"),
@@ -172,6 +173,7 @@ class GeminiHandler:
                 "For the news, the exact date is not important.\n"
                 "- The main targets for the news are undergraduate, graduate, and master students."
                 "- Include the link to the article if available.\n"
+                "- In the imageVideoLinks include all the links of images and videos that are related to the news.\n"
             ),
         )
 

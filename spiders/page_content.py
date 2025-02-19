@@ -14,14 +14,23 @@ class PageContentSpider(scrapy.Spider):
             yield scrapy.Request(url=url, callback=self.parse)
 
     def parse(self, response):
-        # Instead of saving to a file, yield the page content.
-        content = response.text  # or response.body if you need bytes
-        #self.log(f"Fetched content from {response.url}")
+        # Extract text nodes excluding script and style elements.
+        texts = response.xpath('//body//text()[not(ancestor::script) and not(ancestor::style)]').getall()
+        # Clean and join the text parts, filtering out empty strings.
+        cleaned_text = " ".join(t.strip() for t in texts if t.strip())
 
-        with open("page.txt", "w") as f:
-            f.write(content)
+        # Extract links from anchor tags and image sources.
+        # This XPath selects href from <a> and src from <img>.
+        links = response.xpath('//a/@href | //img/@src').getall()
+        # Optionally, convert relative URLs to absolute URLs.
+        links = [response.urljoin(link) for link in links]
+
+        # Save the cleaned text to a file.
+        with open("page.txt", "w", encoding="utf-8") as f:
+            f.write(cleaned_text)
 
         yield {
             'url': response.url,
-            'content': content,
+            'content': cleaned_text,
+            'links': links,
         }

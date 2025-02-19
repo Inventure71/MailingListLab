@@ -1,100 +1,24 @@
-<!DOCTYPE html>
-<html xmlns:fb="http://ogp.me/ns/fb#">
-<head prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb# zoomvideocall: http://ogp.me/ns/fb/zoomvideocall#">
-<meta charset="utf-8">
-<meta name="referrer" content="origin-when-cross-origin">
-<meta http-equiv="X-UA-Compatible" content="IE=edge,Chrome=1">
-<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1.0">
-<meta name="keywords" content="zoom, zoom.us, video conferencing, video conference, online meetings, web meeting, video meeting, cloud meeting, cloud video, group video call, group video chat, screen share, application share, mobility, mobile collaboration, desktop share, video collaboration, group messaging">
-<meta name="description" content="Zoom is the leader in modern enterprise video communications, with an easy, reliable cloud platform for video and audio conferencing, chat, and webinars across mobile, desktop, and room systems. Zoom Rooms is the original software-based conference room solution used around the world in board, conference, huddle, and training rooms, as well as executive offices and classrooms. Founded in 2011, Zoom helps businesses and organizations bring their teams together in a frictionless environment to get more done. Zoom is a publicly traded company headquartered in San Jose, CA.">
-<meta name="robots" content="noindex,nofollow,noarchive">
-<meta property="og:type" content="activity">
-<meta property="og:title" content="Join our Cloud HD Video Meeting">
-<meta property="og:description" content="Zoom is the leader in modern enterprise video communications, with an easy, reliable cloud platform for video and audio conferencing, chat, and webinars across mobile, desktop, and room systems. Zoom Rooms is the original software-based conference room solution used around the world in board, conference, huddle, and training rooms, as well as executive offices and classrooms. Founded in 2011, Zoom helps businesses and organizations bring their teams together in a frictionless environment to get more done. Zoom is a publicly traded company headquartered in San Jose, CA.">
-<meta property="og:url" content="https://plymouth.zoom.us/j/95753314935?pwd=B9cuV9Dj6MWkhgrWEZrGsVz9brL21Q.1">
-<meta property="og:site_name" content="Zoom Video">
-<meta property="fb:app_id" content="113289095462482">
-<meta property="twitter:account_id" content="522701657">
-<title>Launch Meeting - Zoom</title>
-<script nonce="e3kkMDgZSSqBWv8U49vTjw">
-window.launchBase64 = "GsoCCkwIABAAGAEgACogaG1iamJqZHBrb2JkanBsZm9iaGxqbmRmZGZkaXBqaGcyIGZjcG9jZ2xhYm9naGZraWhqYmFpbmRmYWZwZmliY2hvEvcBCAASB3pvb20udXMYACAAKAEwADjgpxJCGis0NDEzMTQ2MDExOTYsOTU3NTMzMTQ5MzUjQhorNDQyMDM0ODE1MjM3LDk1NzUzMzE0OTM1I0IaKzQ0MjAzNDgxNTI0MCw5NTc1MzMxNDkzNSNCGis0NDIwMzkwMTc4OTUsOTU3NTMzMTQ5MzUjQhorNDQyMDgwODA2NTkxLDk1NzUzMzE0OTM1I0IaKzQ0MjA4MDgwNjU5Miw5NTc1MzMxNDkzNSNCGis0NDMzMDA4ODU4MzAsOTU3NTMzMTQ5MzUjSgJHQmIAaAB4AYABAIgBAZABAZgBAaABAagBADIAIswRCjBodHRwczovL2xvZy1nYXRld2F5Lnpvb20udXMvbndzL2pvaW4vbG9nZ2VyL3dqbWYSABpmaHR0cHM6Ly9wbHltb3V0aC56b29tLnVzL3djL2pvaW4vOTU3NTMzMTQ5MzU/ZnJvbVBXQT0xJmZyb209YWRkb24mcHdkPUI5Y3VWOURqNk1Xa2hncldFWnJHc1Z6OWJyTDIxUS4xIosGaHR0cHM6Ly9wbHltb3V0aC56b29tLnVzL2xhdW5jaC9kb3dubG9hZC9JVmhDYnR1cHBzTHo4ZGJOa3lRVXo4dVlmMi1QSnZwUHpHX2FLaVlGU2p0M0p0NUoyRGZ3bldqUy00ZGRkTE5oZlZvc2JQRnFLX3Q1N3VGdHJDQmRHaW1UdkZpSmo5cUo4WWRJZnZVY2NYQy1Oanc4VmhySFJDZmZpaDYxWE03a0djNUdYXzdkdmNXR1I2R0o5cEpFdHQwVUEyeXJ5WDBDLUhTVjQ2cWlwQVNURzVtVHh4TUlBYm5yMjV6UmNwaTRNLWVvNkVic1lsV1o3ZUhfb29iS1ctQUd4V2puLXc2QURhREhyZUV5Q2JhdnU3Mk5OVWRVc1BEZEkxd1h2RXdxZTFFYXhoSG04R0Y5S1g0bEs5ZVNWcFVJTks1LV8wSk1XYXMzLUtxQ1lmYkpHVzZkMlk4aHF2Y1VYMWota19oX1kwSE15OE9mbTVhZno5dWRIc0JVdXlPdVdhLTlhYnNpLVFkaGgyTjFmWnZKQzZ3QVJqNjRDYXZBRnVjZjhKUUg3SjNXMjg5SnFkdUxkMkJyWFlPNmpjbXNxOXRsQ2Q2a0xJUFM5MXU4NHprdHJuYnNwRk85ZHhRT1AzYUowMF9DWFdvZlVMamlNdnRNMXJ3MXFtMFRMSGJPcF9CbmhPNkJGdEZnVXBPclZSaTZJUDJIVGxBV1ZaangyM0w4V29fNlFGUTBqbTlaWk1SaXZ3OEVldzhvTEVPdENIcFdkcnJRQVFNd3hUTmdQQ0NVOHQ2QWs1RS1OQU9mZ0xKQTJIajNibm55ZGJlYklHbmRLZ1VaaTdfbUlxVmJtX1RNd285MGJCRTJVUkJYWDBJankwM0owMjNRZEJaNm80b1hVRENBeFVxSnkxa25CcFh6UHdnY3BMby51Z3hUVl9YcVlWNUZkRVRiL21lZXRpbmcvakVoRExuamc1aW4zb1d5MDNLd3ozcF9PWEFHeWk2b0lVMDVGLkgyWDFSQ3hSbDhKbkZHc1cqEVpvb21fbGF1bmNoZXIuZXhlOi9pdG1zLWFwcHM6Ly9pdHVuZXMuYXBwbGUuY29tL3VzL2FwcC9pZDU0NjUwNTMwN0IhaHR0cHM6Ly9wbHltb3V0aC56b29tLnVzL2Rvd25sb2FkSjhodHRwczovL3BseW1vdXRoLnpvb20udXMvY2xpZW50L2xhdGVzdC9ab29tSW5zdGFsbGVyLmV4ZVJCaHR0cHM6Ly9wbHltb3V0aC56b29tLnVzL2NsaWVudC81LjAuMjYyMTMuMDYwMi9ab29tSW5zdGFsbGVyWFAuZXhlWi9odHRwczovL3BseW1vdXRoLnpvb20udXMvY2xpZW50L2xhdGVzdC9ab29tLnBrZ2JGaHR0cHM6Ly9wbHltb3V0aC56b29tLnVzL2NsaWVudC8zLjYuMTA4MjYuMTEwMS96b29tdXNJbnN0YWxsZXJGdWxsLnBrZ2pGaHR0cHM6Ly9wbHltb3V0aC56b29tLnVzL2NsaWVudC80LjEuMzUzNzQuMTIxNy96b29tdXNJbnN0YWxsZXJGdWxsLnBrZ3JGaHR0cHM6Ly9wbHltb3V0aC56b29tLnVzL2NsaWVudC80LjEuMzUzNzQuMTIxNy96b29tdXNJbnN0YWxsZXJGdWxsLnBrZ3pDaHR0cHM6Ly9wbGF5Lmdvb2dsZS5jb20vc3RvcmUvYXBwcy9kZXRhaWxzP2lkPXVzLnpvb20udmlkZW9tZWV0aW5nc4IBL2h0dHBzOi8vcGx5bW91dGguem9vbS51cy9jbGllbnQvbGF0ZXN0L3pvb20uYXBrigE5aHR0cHM6Ly9wbHltb3V0aC56b29tLnVzL2NsaWVudC80LjUuNTY5OS4xMDI3L3pvb201LjAuYXBrkgFKaHR0cHM6Ly9hcHAuem9vbS51cy93Yz9tbj05NTc1MzMxNDkzNSZwd2Q9QjljdVY5RGo2TVdraGdyV0VackdzVno5YnJMMjFRLjGyAU4KBDEwLjYSRmh0dHBzOi8vcGx5bW91dGguem9vbS51cy9jbGllbnQvMy42LjEwODI2LjExMDEvem9vbXVzSW5zdGFsbGVyRnVsbC5wa2eyAU4KBTEwLjExEkVodHRwczovL3BseW1vdXRoLnpvb20udXMvY2xpZW50LzUuMTYuMTAuMjU2ODkvem9vbXVzSW5zdGFsbGVyRnVsbC5wa2eyAU4KBTEwLjEwEkVodHRwczovL3BseW1vdXRoLnpvb20udXMvY2xpZW50LzUuMTQuMTAuMTkyMDIvem9vbXVzSW5zdGFsbGVyRnVsbC5wa2eyAU4KBTEwLjEyEkVodHRwczovL3BseW1vdXRoLnpvb20udXMvY2xpZW50LzUuMTYuMTAuMjU2ODkvem9vbXVzSW5zdGFsbGVyRnVsbC5wa2eyAUsKBDEwLjkSQ2h0dHBzOi8vcGx5bW91dGguem9vbS51cy9jbGllbnQvNS4xMC40LjY1OTIvem9vbXVzSW5zdGFsbGVyRnVsbC5wa2eyAU4KBDEwLjgSRmh0dHBzOi8vcGx5bW91dGguem9vbS51cy9jbGllbnQvNC4xLjM0ODAxLjExMTYvem9vbXVzSW5zdGFsbGVyRnVsbC5wa2eyAU4KBDEwLjcSRmh0dHBzOi8vcGx5bW91dGguem9vbS51cy9jbGllbnQvNC4xLjM1Mzc0LjEyMTcvem9vbXVzSW5zdGFsbGVyRnVsbC5wa2cq3gMI0vzI+dEyGhBwbHltb3V0aC56b29tLnVzIgRqb2luKrwDChhVcHh0ZVUzNlJVQ1pKSGxCRk1UWnV3PT0Q98Te2uQCGiBCOWN1VjlEajZNV2toZ3JXRVpyR3NWejlickwyMVEuMTIAagRqb2lucAB6DzAuOTIuMTEyMjcuMDkyOYIBAIoBjAJRYTVMT1ZNQU1sbWFtalU5SUlfZHRKcXlOMUZfa1ZSMENybzdpWDhZamk4WHUxa2JsR0dRUjhlVGxQVzdwZXV5UFd5bm9tLUNNN3M1Ty0wSXE4b2RMOTRkbVVSVmtSeGQwY3pBVERUcEdIZ1diY1NSYndOSjFBV2VVUExiZkhwOXlLRUNUQjYzYXpZVDdySTJPQlc2NEJ0N2ZYZ1UxSlRlaTZkN29CVEczWDgtSlRqUWxHUkRXY0ZFamdnc1BvQ1Y0Q1FrR2p5NkNHT1FmNnhGUVp4YVZvcjZqYUU1M3o0NTZmM1BiRDlfQUZIWGtPZHJqUU8tR1NzbEpHSS5GN2Z6bTBWVU15SjRkRzJykgEgZjQ5ZTVkMzU1YTRlNGRjZGI4YzIzMTMzOTkzNDU3ZWLSASVVVElEXzBkNDRhODcyMDQzNjQxZThhYzQ0YzYyODlhMTEwYWUx";
-</script>
-<link rel="shortcut icon" href="https://st1.zoom.us/zoom.ico">
-</head>
-<body>
-<script nonce="e3kkMDgZSSqBWv8U49vTjw" src="https://st1.zoom.us/fe-static/launch-meeting/meeting.a80ce84ab3be18f8c06b.js"></script>
-<script nonce="e3kkMDgZSSqBWv8U49vTjw">
-var __launch_fallback_domains__ = (function () {
-var ret = [];
-ret.push("https://st1.zoom.us");
-ret.push("https://gstatic.zoom.us");
-return ret;
-})();
-function __launch_load_js__(url, events) {
-var sc = document.createElement("script");
-sc.onload = events && events.onload;
-sc.src = url;
-document.getElementsByTagName("head")[0].appendChild(sc);
-}
-function __launch_fallback__(index) {
-if (document.getElementById("zoom-ui-frame")) {
-return;
-}
-var url = (function() {
-var domain = __launch_fallback_domains__[index];
-var path = "\/fe-static/launch-meeting/meeting.a80ce84ab3be18f8c06b.js";
-return domain && path && (domain + path);
-})();
-if (url) {
-__launch_load_js__(url);
-window.setTimeout(function() {__launch_fallback__((index + 1));}, 5000);
-}
-try {
-fetch('/wjmf', {
-method: 'POST',
-mode: 'no-cors',
-headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-body: new URLSearchParams({
-mn: '95753314935',
-mi: 'UpxteU36RUCZJHlBFMTZuw==',
-reason: 'launch_js_fallback',
-msg: index,
-ua: navigator.userAgent,
-ff: window.top !== window
-})
-});
-} catch (ex) {}
-}
-window.setTimeout(function() {__launch_fallback__(0);}, 300);
-</script>
-<script nonce="e3kkMDgZSSqBWv8U49vTjw" type="text/javascript">
-window.useZVALazyLoadChatClient = true;
-</script>
-<script nonce="e3kkMDgZSSqBWv8U49vTjw"
-type="text/javascript"
-src="https://us01ccistatic.zoom.us/us01cci/web-sdk/chat-client.js"
-data-apikey="AM_FKF55QOG_vdWum455Vg"
-data-lazy-load-campaign-url="_blank"
-async>
-</script>
-<script nonce="e3kkMDgZSSqBWv8U49vTjw">
-__launch_load_js__('https://st3.zoom.us/static/6.3.31704/js/lib/fingerprintjs-3.3.3.min.js', {
-"onload": function() {
-try {
-if (window.FingerprintJS) {
-var fpPromise = window.FingerprintJS.load();
-fpPromise.then(function (fp) {
-return fp.get();
-}).then(function (result) {
-window.visitorInfo = result;
-var ue_cookie_time = new Date(Date.now() + 31536000000);
-document.cookie = "_zm_fingerprint" + "=" + result.visitorId + "; expires=" + ue_cookie_time + "; path=/; secure=true; domain=" + "zoom.us";
-})
-}
-} catch (ex) {
-}
-}
-});
-</script>
-</body>
-</html>
+Spatial AI & Robotics Lab Home Team Research Publications Datasets Teaching Culture Outreach Sponsors Contact ICRA'25 Workshop on Foundation Models and Neuro-Symbolic AI for Robotics May 19 - 23, 2025, Atlanta, International Conf. on Robotics & Automation (ICRA) .button.is-info {
+     background-color:#3f9ba7;
+     border-color:transparent;
+     color:#fff
+    }
+    .button.is-info.is-hovered {
+     background-color:#3f9ba7;
+     border-color:transparent;
+     color:#fff
+    } window.onload = function () {
+			let p = document.getElementsByClassName("title is-2")[0].parentElement;
+			p.style.background = "rgba(10, 10, 10, 0.5)";
+			p.style.borderRadius = "20px";
+			p.style.padding = "20px";
+			p.style.width = "fit-content";
+			p.style.margin = "0px";
+		}
+
+		let p = document.getElementsByClassName("title is-2")[0].parentElement;
+		p.style.background = "rgba(10, 10, 10, 0.5)";
+		p.style.borderRadius = "20px";
+		p.style.padding = "20px";
+		p.style.width = "fit-content";
+		p.style.margin = "0px"; The field of robotics has experienced significant growth through the integration of machine learning models, particularly with the rise of foundation models , neuro-symbolic AI , generative models (such as large language models and diffusion models), and other emerging techniques. While these methods have transformed areas like computer vision, natural language processing, and computer graphics, their application in robotics remains largely underexplored. This workshop will address this emerging area by bringing together leading researchers and practitioners in robotics to share insights on the latest advancements, methodologies, and best practices. It will feature invited talks from academic and industrial leaders and technical paper presentations discussing groundbreaking approaches and robotic systems that leverage foundation models and neuro-symbolic AI. The workshop will also explore current challenges, future research directions, and promote interaction through poster sessions and spotlight talks. Call for Workshop Papers We invite submissions for this upcoming workshop, focusing on foundation models, neuro-symbolic AI, generative models, and their applications for robotics. The covered topics strictly align with the recent IJRR Special Issue on “Foundation Models and Neuro-Symbolic AI for Robotics” . Submission site opens on Feb 1, 2025, closes on Mar 2, 2025 ; Notification on Apr 6, 2025; Camera-ready on Apr 20, 2025; Pacific Time (PT). Format: 4 pages excluding acknowledgement, references, and unlimited appendix. Please use the ICRA’25 main conference template (IEEE conference style). Our primary goal is to foster meaningful discussions and idea exchanges between workshop paper authors and the invited speakers . Therefore, we only accept 4-page short papers, which will not be considered formal publications. Authors may therefore either submit their summarized recent published/accepted results (E.g., IJRR, TRO, and venues selected by roboranking.org ) or new ideas with preliminary and unpublished results . This policy allows authors to further develop or resubmit their work to other top-tier venues. Accepted workshop papers will be archived at OpenReview and will be promoted to a broader audience through various media channels. Please note that we use OpenReview for paper reviewing, but reviewer comments will remain confidential , similar to a traditional review process. The reviewing will be single blind . All authors of accepted workshop papers will be required to present their work in a poster session . Authors of outstanding submissions will be invited to deliver an oral presentation during the seminar listed below. Best paper awards will be presented by the IEEE RAS Technical Committee (TC) on Computer & Robot Vision (CRV) . To be eligible for these awards, authors must join the IEEE RAS TC on CRV (which is free) through the IEEE Membership Portal . Seminar Day 1 Session 1 (TBD) Presenter Session Title & Slides Link Time YouTube Link Welcome message by organizers & overview of workshop TBD Yisong Yue Professor California Institute of Technology Neuro-symbolic AI for Safety-Critical Agile Control TBD Yilun Du Assistant Professor Harvard University Generalizable Foundation Models through Compositional Generation TBD Coffee Break and Poster Session Session 2 (TBD) Presenter Session Title & Slides Link Time YouTube Link Dorsa Sadigh Assistant Professor Stanford University Data Curation for Robotics Foundation Models TBD Sebastian Scherer Associate Research Professor Carnegie Mellon University Combining neural representations with rule-based reasoning for autonomous drone search TBD Ayoung Kim Associate Professor Seoul National University TBD TBD Lunch Session 3 (TBD) Presenter Session Title & Slides Link Time YouTube Link Wenlong Huang Ph.D. student Stanford University Task Representations for Open-World Robotic Manipulation TBD Letizia Gionfrida Assistant Professor King’s College London TBD TBD Coffee Break and Poster Session Session 4 (TBD) Presenter Session Title & Slides Link Time YouTube Link Luca Carlone Associate Professor Massachusetts Institute of Technology Neuro-Symbolic Reasoning for 3D Spatial AI TBD Danfei Xu Assistant Professor Georgia Institute of Technology Generative Task and Motion Planning TBD Luigi Palmieri Research Scientist Bosch Research TBD TBD Seminar Day 2 Session 1 (TBD) Presenter Session Title & Slides Link Time YouTube Link Lu Gan Assistant Professor Georgia Institute of Technology TBD TBD Jiajun Wu Assistant Professor Stanford University TBD TBD Coffee Break and Poster Session Session 2 (TBD) Presenter Session Title & Slides Link Time YouTube Link Chen Wang Assistant Professor University at Buffalo Self-supervised Neuro-Symbolic Learning Framework for Robot Autonomy TBD Jeannette Bohg Assistant Professor Stanford University TBD TBD Lunch Session 3 (TBD) Presenter Session Title & Slides Link Time YouTube Link Anirudha Majumdar Associate Professor Princeton University Foundation model-powered robots that know when they don't know TBD Yunzhu Li Assistant Professor Columbia University TBD TBD Dinesh Jayaraman Assistant Professor University of Pennsylvania Tapping Foundation Models for Rewards, Representations, and Policies TBD Coffee Break and Poster Session Session 4 (TBD) Presenter Session Title & Slides Link Time YouTube Link Nima Fazeli Assistant Professor University of Michigan Dexterous Robots in the Age of Foundation Model: Tactile, Language, and Gestures Representations TBD Jiayuan Mao PhD candidate Massachusetts Institute of Technology TBD TBD Workshop Registration Loading… Workshop Organizers & Committee Chen Wang Assistant Professor University at Buffalo Letizia Gionfrida Assistant Professor King's College London Lu Gan Assistant Professor Georgia Institute of Technology Jiajun Wu Assistant Professor Stanford University Yunzhu Li Assistant Professor Columbia University Ayoung Kim Associate Professor Seoul National University Luigi Palmieri Research Scientist Bosch Research Alexander Gray President Centaur AI Institute Student Organizers Yi Du Ph.D. student University at Buffalo Taimeng Fu Ph.D. student University at Buffalo Bowen Li Ph.D. student Carnegie Mellon Uni. Qiwei Du Ph.D. student University at Buffalo Shaoshu Su Ph.D. student University at Buffalo Zhipeng Zhao Ph.D. student University at Buffalo Sponsers

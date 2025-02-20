@@ -14,7 +14,7 @@ from collections import deque
 class GeminiHandler:
     def __init__(self):
         # read json file and extract token
-        self.key = json.load(open("credentials/key_paid.json"))["key"]
+        self.key = json.load(open("credentials/key.json"))["key"]
         self.config = None
         #self.model_name = "gemini-2.0-flash"
         self.model_name = "gemini-2.0-flash-exp"
@@ -138,7 +138,7 @@ class GeminiHandler:
                     items=types.Schema(
                         type="OBJECT",
                         enum=[],  # No enum values.
-                        required=["source", "brief description", "relevancy"],
+                        required=["source", "brief description", "relevancy", "location"],
                         properties={
                             "source": types.Schema(type="STRING"),
                             "brief description": types.Schema(type="STRING"),

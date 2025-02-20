@@ -145,7 +145,7 @@ class GmailManager:
             print(f"An error occurred: {error}")
             return emails
 
-    def combine_unread_emails_text_in_period(self, start_date, end_date, max_results=100):
+    def combine_unread_emails_text_in_period(self, start_date, end_date, max_results=15, unread_only=True):
         """
         Combines the text content of all unread emails within a specified period and
         extracts all hyperlinks and image URLs from their HTML content.
@@ -165,7 +165,11 @@ class GmailManager:
         combined_links = set()
         combined_images = set()
 
-        query = f"is:unread after:{start_date} before:{end_date}"
+        if unread_only:
+            query = f"is:unread after:{start_date} before:{end_date}"
+        else:
+            query = f"after:{start_date} before:{end_date}"
+
         try:
             results = self.service.users().messages().list(
                 userId="me", q=query, maxResults=max_results
@@ -205,11 +209,9 @@ class GmailManager:
                     body={"removeLabelIds": ["UNREAD"]}
                 ).execute()
 
-            return {
-                "text": combined_text.strip(),
-                "links": list(combined_links),
-                "images": list(combined_images)
-            }
+            text = f"{combined_text.strip()}\nLinks: {combined_links}\nImages{combined_images}"
+
+            return text
 
         except HttpError as error:
             print(f"An error occurred: {error}")
@@ -218,6 +220,35 @@ class GmailManager:
                 "links": list(combined_links),
                 "images": list(combined_images)
             }
+
+    def send_email_html(self, to, subject, html_content, sender=None):
+        """
+        Sends an email with HTML content.
+
+        Parameters:
+            to (str): Recipient email address.
+            subject (str): Email subject.
+            html_content (str): HTML content of the email.
+            sender (str): Optional sender email address.
+        """
+        message = MIMEMultipart("alternative")
+        message["to"] = to
+        message["subject"] = subject
+        message["from"] = sender if sender else "me"
+
+        # Attach the HTML content.
+        message.attach(MIMEText(html_content, "html"))
+
+        raw_message = base64.urlsafe_b64encode(message.as_bytes()).decode("utf-8")
+        try:
+            sent_message = self.service.users().messages().send(
+                userId="me", body={"raw": raw_message}
+            ).execute()
+            print("Email sent successfully. Message ID:", sent_message["id"])
+            return sent_message
+        except HttpError as error:
+            print("An error occurred:", error)
+            return None
 
     def send_email_from_html_file(self, to, subject, html_file_path, sender=None):
         """

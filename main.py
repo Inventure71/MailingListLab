@@ -1,5 +1,6 @@
 import json
 import base64
+import re
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 import multiprocessing
@@ -41,15 +42,12 @@ def extract_top_N(response, N=5):
 
     return news_list[:N]
 
-def main():
-    gmail_handler = GmailManager()
-    gemini_handler = GeminiHandler()
-
+def main(gmail_handler, gemini_handler):
     # year, month, day
     start_date = "2025/02/11"
     end_date = "2025/02/19"
 
-    combined_text = gmail_handler.combine_unread_emails_text_in_period(start_date, end_date)
+    combined_text = gmail_handler.combine_unread_emails_text_in_period(start_date, end_date, unread_only=False)
     print("Combined Email Text:\n", combined_text)
 
     response = gemini_handler.retrieve_news_gemini(combined_text)
@@ -64,13 +62,13 @@ def main():
         source = news.get("source", "")
         description = news.get("brief description", "")
         link = news.get("linkToAricle", "")
-        relevancy = news.get("relevancy", 0)
+        #relevancy = news.get("relevancy", 0)
         location = news.get("location", "")
         images_videos_links = news.get("imageVideosLinks", "")
         contact = news.get("contact", "")
         requirements = news.get("requirements", "")
 
-        news_text = f"Source: {source}\n Description: {description}\n Link: {link}\n Relevancy: {relevancy}\n Location: {location}\n Contact: {contact}\n Requirements: {requirements}\n"
+        news_text = f"Source: {source}\n Description: {description}\n Link: {link}\n Location: {location}\n Contact: {contact}\n Requirements: {requirements}\n Images and Videos Links: {images_videos_links}\n"
 
         if link and len(link) > 5 and link != "Unknown":
             print("link:", link)
@@ -95,18 +93,19 @@ def main():
 
 - **Article Title**
 - **Source**
-- **Description**
+- **Article Description** (A more detailed description of the news)
+- **Article Summary** (A quick bite-sized summary of the news, only visible when hovering over the article description)
 - **Link** (displayed as a clickable hyperlink)
 - **Location**
 - **Contact**
-- **Article Summary** 
 
 Additional requirements:
-- Utilize some images (if provided via link) to make the email visually appealing.
+- Utilize some images (if provided via link) to make the email visually appealing, be sure that the path is absolute.
 - The email should have a header with the title "Daily News Update" and a footer with a note like "Powered by Ie Robotics Lab".
 - Use inline CSS styling to ensure compatibility across major email clients.
 - The layout should be clean, mobile-friendly, and easy to read.
 - Do not include any additional commentary or explanations—output only the complete HTML code.
+- Make it look professional and visually appealing.
 
 Here are the news articles data:
 {total_text}
@@ -115,6 +114,17 @@ Here are the news articles data:
     response = gemini_handler.generic_ask_gemini(prompt)[0]
     print("Response:\n", response)
 
+    pattern = r'^```(?:[a-zA-Z]+)?\s*\n([\s\S]*?)\n```$'
+    match = re.match(pattern, response)
+    if match:
+        response = match.group(1)
+
+    # Split into lines and remove the first line if it starts with an HTML tag (e.g., <!DOCTYPE or <html)
+    lines = response.splitlines()
+    if lines and re.match(r'^\s*(<!doctype|<html)', lines[0], re.IGNORECASE):
+        lines = lines[1:]
+    response = "\n".join(lines)
+
     with open("output.html", "w") as f:
         f.write(response)
         f.close()
@@ -122,4 +132,10 @@ Here are the news articles data:
 
 
 if __name__ == '__main__':
-    main()
+    gmail_handler = GmailManager()
+
+    gmail_handler.send_email_from_html_file("matteo.giorgetti.05@gmail.com", "Daily News Update", "output.html")
+
+    #gemini_handler = GeminiHandler()
+
+    #main(gmail_handler, gemini_handler)

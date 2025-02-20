@@ -33,12 +33,12 @@ class NewsEmailGenerator:
                     </div>
                     <div style="display: block; font-size: 16px; color: #555555; line-height: 1.5; 
                               position: relative; min-height: 50px;" class="article-desc">
-                        <div style="position: relative; z-index: 1;">
+                        <div style="position: relative;">
                             {article["description"]}
                         </div>
                         <div style="display: none; position: absolute; background-color: rgba(249, 249, 249, 0.95); 
                                   color: #333333; border: 1px solid #cccccc; padding: 5px; 
-                                  width: 100%; height: 100%; font-size: 14px; z-index: 2; 
+                                  width: 100%; height: 100%; font-size: 14px; z-index: 20; 
                                   border-radius: 5px; top: 0; left: 0; box-sizing: border-box;" 
                              class="summary">
                             Article Summary: {article["summary"]}

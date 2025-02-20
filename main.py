@@ -1,19 +1,13 @@
 import json
-import base64
-import re
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
 import multiprocessing
+import re
 
-from googleapiclient.errors import HttpError
-from scrapy.linkextractors import LinkExtractor
-from scrapy.spiders import CrawlSpider, Rule
 from scrapy.crawler import CrawlerProcess
 from scrapy.utils.project import get_project_settings
 
 from gmail_handler import GmailManager
 from spiders.page_content import PageContentSpider
-from use_gemini import GeminiHandler
+
 
 def run_crawler(link):
     process = CrawlerProcess(get_project_settings())

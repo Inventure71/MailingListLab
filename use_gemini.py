@@ -123,9 +123,6 @@ class GeminiHandler:
         return blocks
 
     def retrieve_news_gemini(self, prompt):
-        # Load your API key from a JSON credentials file.
-        key = json.load(open("credentials/key_paid.json"))["key"]
-        client = genai.Client(api_key=key)
 
         # Define the JSON schema for the news extraction.
         json_schema = types.Schema(
@@ -184,7 +181,7 @@ class GeminiHandler:
         )
 
         # Generate the content using the specified model and configuration.
-        response = client.models.generate_content(
+        response = self.client.models.generate_content(
             model=self.model_name,
             contents=content_obj,
             config=generation_config,
@@ -193,6 +190,67 @@ class GeminiHandler:
         print("Response:", response.text)
         return response.text
 
+    def divide_news_gemini(self, prompt):
+        # Define the JSON schema for the news extraction.
+        json_schema = types.Schema(
+            type="OBJECT",
+            enum=[],  # No enum values.
+            required=["news"],
+            properties={
+                "news": types.Schema(
+                    type="ARRAY",
+                    items=types.Schema(
+                        type="OBJECT",
+                        enum=[],  # No enum values.
+                        required=["title", "source", "location", "description", "summary", "link"],
+                        properties={
+                            "title": types.Schema(type="STRING"),
+                            "source": types.Schema(type="STRING"),
+                            "location": types.Schema(type="STRING"),
+                            "contact": types.Schema(type="STRING"),
+                            "description": types.Schema(type="STRING"),
+                            "summary": types.Schema(type="STRING"),
+                            "link": types.Schema(type="STRING"),
+                            "image": types.Schema(type="STRING"),
+                        },
+                    ),
+                ),
+            },
+        )
+
+        # Define the generation configuration.
+        generation_config = types.GenerateContentConfig(
+            temperature=1,
+            top_p=0.95,
+            top_k=40,
+            max_output_tokens=8192,
+            response_schema=json_schema,
+            response_mime_type="application/json",
+            system_instruction=(
+                "- Only include images if provided in the prompt and the path is absolute\n"
+                "- If the location is not specified or is an online meeting say Online\n"
+                "- If contact is not included don't include it\n"
+                "- The description of the news should be a detailed description of the news\n"
+                "- The summary of the news should be a really quick bite-sized summary of the news\n"
+                "- Only include the link to the article or website of the news\n"
+            ),
+        )
+
+        # Create the content object using the provided prompt.
+        content_obj = types.Content(
+            role="user",
+            parts=[types.Part(text=prompt)]
+        )
+
+        # Generate the content using the specified model and configuration.
+        response = self.client.models.generate_content(
+            model=self.model_name,
+            contents=content_obj,
+            config=generation_config,
+        )
+
+        print("Response:", response.text)
+        return response.text
 
 
 

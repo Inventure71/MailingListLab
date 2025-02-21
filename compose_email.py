@@ -3,7 +3,7 @@ from typing import List, Dict
 
 
 class NewsEmailGenerator:
-    def __init__(self, title: str = "Daily News Update", footer_text: str = "Powered by Ie Robotics Lab"):
+    def __init__(self, title: str = "Weekly News", footer_text: str = "Powered by Ie Robotics & AI Lab"):
         self.title = title
         self.footer_text = footer_text
 

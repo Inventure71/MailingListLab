@@ -5,8 +5,10 @@ import re
 from scrapy.crawler import CrawlerProcess
 from scrapy.utils.project import get_project_settings
 
+from compose_email import NewsEmailGenerator
 from gmail_handler import GmailManager
 from spiders.page_content import PageContentSpider
+from use_gemini import GeminiHandler
 
 
 def run_crawler(link):
@@ -36,7 +38,7 @@ def extract_top_N(response, N=5):
 
     return news_list[:N]
 
-def main(gmail_handler, gemini_handler):
+def main(gmail_handler, gemini_handler, email_creator):
     # year, month, day
     start_date = "2025/02/11"
     end_date = "2025/02/19"
@@ -105,9 +107,11 @@ Here are the news articles data:
 {total_text}
     """
 
-    response = gemini_handler.generic_ask_gemini(prompt)[0]
+    prompt = "Given the following information about the news do as instructed for each of them.\n" + total_text
+    response = gemini_handler.divide_news_gemini(prompt)
     print("Response:\n", response)
 
+    """
     pattern = r'^```(?:[a-zA-Z]+)?\s*\n([\s\S]*?)\n```$'
     match = re.match(pattern, response)
     if match:
@@ -121,15 +125,19 @@ Here are the news articles data:
 
     with open("output.html", "w") as f:
         f.write(response)
-        f.close()
+        f.close()"""
+
+    email_creator.generate_email(response)
 
 
 
 if __name__ == '__main__':
     gmail_handler = GmailManager()
+    email_creator = NewsEmailGenerator()
+    gemini_handler = GeminiHandler()
 
-    gmail_handler.send_email_from_html_file("matteo.giorgetti.05@gmail.com", "Daily News Update", "output.html")
 
-    #gemini_handler = GeminiHandler()
+    #gmail_handler.send_email_from_html_file("matteo.giorgetti.05@gmail.com", "Daily News Update", "output.html")
 
-    #main(gmail_handler, gemini_handler)
+
+    #main(gmail_handler, gemini_handler, email_creator)

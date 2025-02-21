@@ -38,6 +38,50 @@ def extract_top_N(response, N=5):
 
     return news_list[:N]
 
+
+def convert_news(data):
+    """
+    Convert a dictionary containing a "news" key into a list of news dictionaries.
+
+    Each news dictionary will include the following keys:
+      - title
+      - source
+      - location
+      - contact
+      - description
+      - summary
+      - link
+      - image (if present in the original item)
+
+    Args:
+        data (dict): Input dictionary containing a "news" key.
+
+    Returns:
+        list: A list of formatted news dictionaries.
+    """
+    news_items = data.get("news", [])
+    sample_news = []
+    for item in news_items:
+        news_entry = {
+            "title": item.get("title", ""),
+            "source": item.get("source", ""),
+            "location": item.get("location", ""),
+            "contact": item.get("contact", ""),
+            "description": item.get("description", ""),
+            "summary": item.get("summary", ""),
+            "link": item.get("link", "")
+        }
+        # Optionally, add an image key. For instance, if an "image" key is present in the input,
+        # include it; or you can add a default placeholder image as shown below.
+        if "image" in item:
+            news_entry["image"] = item["image"]
+        # Uncomment the following block to add a default image when none is provided:
+        # else:
+        #     news_entry["image"] = "https://via.placeholder.com/560x200"
+
+        sample_news.append(news_entry)
+    return sample_news
+
 def main(gmail_handler, gemini_handler, email_creator):
     # year, month, day
     start_date = "2025/02/11"
@@ -127,7 +171,12 @@ Here are the news articles data:
         f.write(response)
         f.close()"""
 
-    email_creator.generate_email(response)
+    # Parse the JSON string into a dictionary
+    response_dict = json.loads(response)
+    processed_news = convert_news(response_dict)
+
+
+    email_creator.generate_email(processed_news)
 
 
 
@@ -140,4 +189,4 @@ if __name__ == '__main__':
     #gmail_handler.send_email_from_html_file("matteo.giorgetti.05@gmail.com", "Daily News Update", "output.html")
 
 
-    #main(gmail_handler, gemini_handler, email_creator)
+    main(gmail_handler, gemini_handler, email_creator)

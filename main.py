@@ -1,6 +1,5 @@
 import json
 import multiprocessing
-import re
 
 from scrapy.crawler import CrawlerProcess
 from scrapy.utils.project import get_project_settings
@@ -37,7 +36,6 @@ def extract_top_N(response, N=5):
             news_list.append(news)
 
     return news_list[:N]
-
 
 def convert_news(data):
     """
@@ -124,6 +122,7 @@ def main(gmail_handler, gemini_handler, email_creator, send_mail=True):
 
     print(total_text)
 
+    #OLD PROMPT ⬇
     prompt = f"""
     You are an expert in crafting HTML email templates. Based on the following news articles, please generate a responsive, clean, and professional HTML email template. Each news article should be displayed in its own section and include the following information:
 
@@ -146,6 +145,7 @@ Additional requirements:
 Here are the news articles data:
 {total_text}
     """
+    #OLD PROMPT ⬆
 
     prompt = "Given the following information about the news do as instructed for each of them.\n" + total_text
     response = gemini_handler.divide_news_gemini(prompt)
@@ -167,14 +167,12 @@ Here are the news articles data:
         f.write(response)
         f.close()"""
 
-    # Parse the JSON string into a dictionary
+    # parse the JSON string into a dictionary
     response_dict = json.loads(response)
     processed_news = convert_news(response_dict)
 
-    # Generate the email
     email_html = email_creator.generate_email(processed_news)
 
-    # Save to file
     with open("output.html", "w", encoding="utf-8") as f:
         f.write(email_html)
 

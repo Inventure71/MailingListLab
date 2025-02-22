@@ -113,7 +113,7 @@ def main(gmail_handler, gemini_handler, email_creator, send_mail=True):
             p.join()
             p.close()
 
-            with open("page.txt", "r") as f:
+            with open("files/page.txt", "r") as f:
                 page_content = f.read()
                 print("Page Content:\n", page_content)
                 news_text += f"Article Content:\n{page_content}\n"
@@ -173,7 +173,7 @@ Here are the news articles data:
 
     email_html = email_creator.generate_email(processed_news)
 
-    with open("output.html", "w", encoding="utf-8") as f:
+    with open("files/output.html", "w", encoding="utf-8") as f:
         f.write(email_html)
 
     if send_mail:

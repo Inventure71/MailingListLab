@@ -26,7 +26,7 @@ class PageContentSpider(scrapy.Spider):
         links = [response.urljoin(link) for link in links]
 
         # save for debugging purposes
-        with open("page.txt", "w", encoding="utf-8") as f:
+        with open("files/page.txt", "w", encoding="utf-8") as f:
             f.write(cleaned_text)
 
         yield {

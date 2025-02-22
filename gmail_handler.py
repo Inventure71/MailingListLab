@@ -20,7 +20,7 @@ SCOPES = [
 
 
 class GmailManager:
-    def __init__(self, credentials_file="credentials/credentials.json", token_file="token.json"):
+    def __init__(self, credentials_file="credentials/credentials.json", token_file="credentials/token.json"):
         """
         Initializes the Gmail API service using OAuth 2.0 credentials.
         If no valid token is found, it runs the OAuth flow to obtain one.
@@ -29,10 +29,22 @@ class GmailManager:
         self.creds = None
         if os.path.exists(token_file):
             self.creds = Credentials.from_authorized_user_file(token_file, SCOPES)
-        if not self.creds or not self.creds.valid:
+
+        if not self.creds or not self.creds.valid or self.creds.expired:
             if self.creds and self.creds.expired and self.creds.refresh_token:
-                self.creds.refresh(Request())
-            else:
+                print("Refreshing expired token...")
+                try:
+                    self.creds.refresh(Request())
+                except:
+                    print("Error refreshing token, eliminating token file")
+                    try:
+                        os.remove(token_file)
+                    except:
+                        print("Error deleting token file")
+                    self.creds = None
+
+            if not self.creds:
+                print("No valid token found. Running OAuth flow...")
                 flow = InstalledAppFlow.from_client_secrets_file(credentials_file, SCOPES)
                 self.creds = flow.run_local_server(port=0)
             with open(token_file, "w") as token:

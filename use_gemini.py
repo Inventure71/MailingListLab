@@ -116,18 +116,16 @@ class GeminiHandler:
         return blocks
 
     def retrieve_news_gemini(self, prompt):
-
-        # Define the JSON schema for the news extraction.
         json_schema = types.Schema(
             type="OBJECT",
-            enum=[],  # No enum values.
+            enum=[],
             required=["news"],
             properties={
                 "news": types.Schema(
                     type="ARRAY",
                     items=types.Schema(
                         type="OBJECT",
-                        enum=[],  # No enum values.
+                        enum=[],
                         required=["source", "brief description", "relevancy", "location"],
                         properties={
                             "source": types.Schema(type="STRING"),
@@ -145,7 +143,7 @@ class GeminiHandler:
             },
         )
 
-        # Define the generation configuration.
+        # define the generation configuration
         generation_config = types.GenerateContentConfig(
             temperature=1,
             top_p=0.95,
@@ -167,13 +165,13 @@ class GeminiHandler:
             ),
         )
 
-        # Create the content object using the provided prompt.
+        # content object using the provided prompt
         content_obj = types.Content(
             role="user",
             parts=[types.Part(text=prompt)]
         )
 
-        # Generate the content using the specified model and configuration.
+        # generate the content using the specified model and configuration
         response = self.client.models.generate_content(
             model=self.model_name,
             contents=content_obj,
@@ -184,17 +182,16 @@ class GeminiHandler:
         return response.text
 
     def divide_news_gemini(self, prompt):
-        # Define the JSON schema for the news extraction.
         json_schema = types.Schema(
             type="OBJECT",
-            enum=[],  # No enum values.
+            enum=[],
             required=["news"],
             properties={
                 "news": types.Schema(
                     type="ARRAY",
                     items=types.Schema(
                         type="OBJECT",
-                        enum=[],  # No enum values.
+                        enum=[],
                         required=["title", "source", "location", "description", "summary", "link"],
                         properties={
                             "title": types.Schema(type="STRING"),
@@ -211,7 +208,7 @@ class GeminiHandler:
             },
         )
 
-        # Define the generation configuration.
+        # define the generation configuration
         generation_config = types.GenerateContentConfig(
             temperature=1,
             top_p=0.95,
@@ -229,13 +226,13 @@ class GeminiHandler:
             ),
         )
 
-        # Create the content object using the provided prompt.
+        # create the content object using the provided prompt
         content_obj = types.Content(
             role="user",
             parts=[types.Part(text=prompt)]
         )
 
-        # Generate the content using the specified model and configuration.
+        # generate the content using the specified model and configuration.
         response = self.client.models.generate_content(
             model=self.model_name,
             contents=content_obj,
@@ -244,8 +241,3 @@ class GeminiHandler:
 
         print("Response:", response.text)
         return response.text
-
-
-
-
-

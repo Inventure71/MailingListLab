@@ -17,7 +17,7 @@ def run_crawler(link):
     process.start()
 
 def extract_top_N(response, N=5):
-    # Parse the JSON string into a Python dictionary
+    # parse the JSON string into a Python dictionary
     response_data = json.loads(response)
 
     news_items = response_data.get("news", [])
@@ -71,18 +71,14 @@ def convert_news(data):
             "summary": item.get("summary", ""),
             "link": item.get("link", "")
         }
-        # Optionally, add an image key. For instance, if an "image" key is present in the input,
-        # include it; or you can add a default placeholder image as shown below.
+        # optionally add an image key. For instance, if an "image" key is present in the input
         if "image" in item:
             news_entry["image"] = item["image"]
-        # Uncomment the following block to add a default image when none is provided:
-        # else:
-        #     news_entry["image"] = "https://via.placeholder.com/560x200"
 
         sample_news.append(news_entry)
     return sample_news
 
-def main(gmail_handler, gemini_handler, email_creator):
+def main(gmail_handler, gemini_handler, email_creator, send_mail=True):
     # year, month, day
     start_date = "2025/02/11"
     end_date = "2025/02/19"
@@ -175,9 +171,15 @@ Here are the news articles data:
     response_dict = json.loads(response)
     processed_news = convert_news(response_dict)
 
+    # Generate the email
+    email_html = email_creator.generate_email(processed_news)
 
-    email_creator.generate_email(processed_news)
+    # Save to file
+    with open("output.html", "w", encoding="utf-8") as f:
+        f.write(email_html)
 
+    if send_mail:
+        gmail_handler.send_email_from_html_file("matteo.giorgetti.05@gmail.com", "Daily News Update", "output.html")
 
 
 if __name__ == '__main__':

@@ -39,7 +39,8 @@ class GmailManager:
                 token.write(self.creds.to_json())
         self.service = build("gmail", "v1", credentials=self.creds)
 
-    def get_email_content(self, payload):
+    @staticmethod
+    def get_email_content(payload):
         """
         Extracts plain text and HTML content from the email payload.
         This function recursively walks through MIME parts.
@@ -52,8 +53,8 @@ class GmailManager:
             mime_type = part.get("mimeType")
             body = part.get("body", {})
             data = body.get("data")
-            # If the part has its own parts, process them recursively.
-            if part.get("parts"):
+
+            if part.get("parts"): # if the part has its own parts, process them recursively.
                 for subpart in part.get("parts"):
                     parse_part(subpart)
             else:
@@ -67,7 +68,8 @@ class GmailManager:
         parse_part(payload)
         return plain_text, html_text
 
-    def extract_links_and_images(self, html_content):
+    @staticmethod
+    def extract_links_and_images(html_content):
         """
         Parses HTML content using BeautifulSoup to extract all hyperlinks and image sources.
         Returns a tuple of (links, images).
@@ -77,75 +79,7 @@ class GmailManager:
         images = [img.get("src") for img in soup.find_all("img", src=True)]
         return links, images
 
-    def get_emails(self, max_results=5):
-        """
-        Fetches unread emails from the user's inbox and marks them as read.
-        Returns a list of dictionaries containing email details.
-        """
-        emails = []
-        try:
-            # Query for unread messages only using the 'is:unread' filter
-            results = self.service.users().messages().list(
-                userId="me",
-                maxResults=max_results,
-                q="is:unread"
-            ).execute()
-
-            messages = results.get("messages", [])
-            if not messages:
-                print("No unread messages found.")
-                return emails
-
-            for msg in messages:
-                msg_id = msg["id"]
-                message = self.service.users().messages().get(
-                    userId="me",
-                    id=msg_id,
-                    format="full"
-                ).execute()
-
-                # Extract email details as before
-                headers = message.get("payload", {}).get("headers", [])
-                subject = None
-                sender = None
-                for header in headers:
-                    if header["name"] == "Subject":
-                        subject = header["value"]
-                    if header["name"] == "From":
-                        sender = header["value"]
-
-                payload = message.get("payload", {})
-                plain_text, html_text = self.get_email_content(payload)
-                links = []
-                images = []
-                if html_text:
-                    links, images = self.extract_links_and_images(html_text)
-
-                email_data = {
-                    "id": msg_id,
-                    "subject": subject,
-                    "from": sender,
-                    "plain_text": plain_text,
-                    "html_text": html_text,
-                    "links": links,
-                    "images": images
-                }
-                emails.append(email_data)
-
-                # Mark the message as read by removing the UNREAD label
-                self.service.users().messages().modify(
-                    userId="me",
-                    id=msg_id,
-                    body={"removeLabelIds": ["UNREAD"]}
-                ).execute()
-
-            return emails
-
-        except HttpError as error:
-            print(f"An error occurred: {error}")
-            return emails
-
-    def combine_unread_emails_text_in_period(self, start_date, end_date, max_results=15, unread_only=True):
+    def combine_unread_emails_text_in_period(self, start_date, end_date, max_results=15, unread_only=True, set_as_read=True):
         """
         Combines the text content of all unread emails within a specified period and
         extracts all hyperlinks and image URLs from their HTML content.
@@ -187,7 +121,7 @@ class GmailManager:
 
                 plain_text, html_text = self.get_email_content(message.get("payload", {}))
 
-                # Use plain text if available; otherwise, extract text from HTML.
+                # use plain text if available, otherwise extract text from HTML.
                 if not plain_text and html_text:
                     soup = BeautifulSoup(html_text, "html.parser")
                     email_text = soup.get_text()
@@ -196,18 +130,18 @@ class GmailManager:
 
                 combined_text += email_text.strip() + "\n\n"
 
-                # If there is HTML content, extract links and images.
+                # if there is HTML content, extract links and images.
                 if html_text:
                     links, images = self.extract_links_and_images(html_text)
                     combined_links.update(links)
                     combined_images.update(images)
 
-                # Optionally, mark the message as read.
-                self.service.users().messages().modify(
-                    userId="me",
-                    id=msg["id"],
-                    body={"removeLabelIds": ["UNREAD"]}
-                ).execute()
+                if set_as_read: # mark the email as read
+                    self.service.users().messages().modify(
+                        userId="me",
+                        id=msg["id"],
+                        body={"removeLabelIds": ["UNREAD"]}
+                    ).execute()
 
             text = f"{combined_text.strip()}\nLinks: {combined_links}\nImages{combined_images}"
 
@@ -236,8 +170,7 @@ class GmailManager:
         message["subject"] = subject
         message["from"] = sender if sender else "me"
 
-        # Attach the HTML content.
-        message.attach(MIMEText(html_content, "html"))
+        message.attach(MIMEText(html_content, "html")) # attach the HTML content.
 
         raw_message = base64.urlsafe_b64encode(message.as_bytes()).decode("utf-8")
         try:
@@ -260,11 +193,9 @@ class GmailManager:
             sender: Optional sender email address
         """
         try:
-            # Read the HTML content from file
             with open(html_file_path, 'r', encoding='utf-8') as file:
                 html_content = file.read()
 
-            # Send the email using the existing send_email_html method
             return self.send_email_html(to, subject, html_content, sender)
 
         except FileNotFoundError:

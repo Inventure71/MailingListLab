@@ -1,43 +1,36 @@
 import json
 import time
-
-from google import genai
 from collections import deque
-import json
-import time
 
 from google import genai
 from google.genai import types
-from google.genai.types import HttpOptions
-from collections import deque
+
 
 class GeminiHandler:
     def __init__(self):
-        # read json file and extract token
         self.key = json.load(open("credentials/key.json"))["key"]
         self.config = None
-        #self.model_name = "gemini-2.0-flash"
-        self.model_name = "gemini-2.0-flash-exp"
+        self.model_name = "gemini-2.0-flash-exp" # "gemini-2.0-flash"
         self.client = genai.Client(api_key=self.key)
 
-        self.requests_timestamps = deque(maxlen=10)  # Store timestamps of last 10 requests
-        self.rate_limit = 10  # requests
-        self.time_window = 60  # seconds (1 minute)
+        self.requests_timestamps = deque(maxlen=10)  # store timestamps of last 10 requests
+        self.rate_limit = 10  # requests number
+        self.time_window = 60  # seconds before refresh of requests (1 minute)
 
     def check_rate_limit(self):
         """Check if we can make a new request based on rate limits."""
         current_time = time.time()
 
-        # Remove timestamps older than our time window
+        # remove timestamps older than time window
         while self.requests_timestamps and current_time - self.requests_timestamps[0] >= self.time_window:
             self.requests_timestamps.popleft()
 
-        # If we have less than rate_limit requests in our window, we can proceed
+        # if less than rate_limit requests in timestamps proceed
         if len(self.requests_timestamps) < self.rate_limit:
             self.requests_timestamps.append(current_time)
             return True
 
-        # Calculate wait time if we're at the limit
+        # calculate wait time if it is at the limit
         if self.requests_timestamps:
             wait_time = self.time_window - (current_time - self.requests_timestamps[0])
             if wait_time > 0:
@@ -72,7 +65,8 @@ class GeminiHandler:
 
         return responses
 
-    def divide_into_blocks(self, prompt):
+    @staticmethod
+    def divide_into_blocks(prompt):
         """
         # Use the existing client instance instead of creating a new one
         response = self.client.models.count_tokens(
@@ -97,14 +91,13 @@ class GeminiHandler:
             print("Number of blocks:", len(blocks))
             return blocks"""
 
-        # Define maximum block size in characters (approximately 100K chars)
         max_block_size = 2000000
 
-        # If text is small enough, return as single block
+        # if text is small enough, return as single block
         if len(prompt) <= max_block_size:
             return [prompt]
 
-        # Split into blocks
+        # split into blocks
         blocks = []
         start = 0
         while start < len(prompt):

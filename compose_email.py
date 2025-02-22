@@ -7,6 +7,7 @@ class NewsEmailGenerator:
         self.footer_text = footer_text
 
     def generate_header(self) -> str:
+        """Generate the header of the email based on the title variable"""
         return f'''
         <tr>
             <td style="background-color: #003366; color: #ffffff; text-align: center; padding: 15px; 
@@ -15,7 +16,9 @@ class NewsEmailGenerator:
             </td>
         </tr>'''
 
-    def generate_article(self, article: Dict) -> str:
+    @staticmethod
+    def generate_article(article: Dict) -> str:
+        """Generate the HTML for a single news article"""
         return f'''
         <tr>
             <td style="padding: 8px 20px;">
@@ -40,7 +43,7 @@ class NewsEmailGenerator:
                                   width: 100%; height: 100%; font-size: 14px; z-index: 20; 
                                   border-radius: 5px; top: 0; left: 0; box-sizing: border-box;" 
                              class="summary">
-                            Article Summary: {article["summary"]}
+                             Summary: {article["summary"]}
                         </div>
                     </div>
                     <div style="margin-top: 8px;">
@@ -52,6 +55,7 @@ class NewsEmailGenerator:
         </tr>'''
 
     def generate_footer(self) -> str:
+        """Generate the footer of the email based on the footer_text variable"""
         return f'''
         <tr>
             <td style="text-align: center; background-color: #f4f4f4; color: #777777; 
@@ -61,6 +65,7 @@ class NewsEmailGenerator:
         </tr>'''
 
     def generate_email(self, articles: List[Dict]) -> str:
+        """Generate the full HTML content of the email and mix it together with other modules"""
         articles_html = "\n".join(self.generate_article(article) for article in articles)
 
         return f'''<!DOCTYPE html>
@@ -110,9 +115,7 @@ class NewsEmailGenerator:
 </html>'''
 
 
-# Example usage:
 if __name__ == "__main__":
-    # Sample news articles in JSON format
     sample_news = [
         {
             "title": "Breaking News Story",
@@ -135,10 +138,8 @@ if __name__ == "__main__":
         }
     ]
 
-    # Generate the email
     generator = NewsEmailGenerator()
     email_html = generator.generate_email(sample_news)
 
-    # Save to file
     with open("output.html", "w", encoding="utf-8") as f:
         f.write(email_html)

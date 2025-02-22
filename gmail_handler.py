@@ -12,7 +12,7 @@ from googleapiclient.errors import HttpError
 
 from bs4 import BeautifulSoup
 
-# Use these scopes to allow reading (modifying) and sending emails.
+# scopes to allow reading (modifying) and sending emails in gmail
 SCOPES = [
     "https://www.googleapis.com/auth/gmail.modify",
     "https://www.googleapis.com/auth/gmail.send"
@@ -204,7 +204,6 @@ class GmailManager:
         except Exception as e:
             print(f"Error reading HTML file: {str(e)}")
             return None
-
 
 
 if __name__ == "__main__":

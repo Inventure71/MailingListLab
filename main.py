@@ -177,7 +177,7 @@ Here are the news articles data:
         f.write(email_html)
 
     if send_mail:
-        gmail_handler.send_email_from_html_file("matteo.giorgetti.05@gmail.com", "Daily News Update", "output.html")
+        gmail_handler.send_email_from_html_file("matteo.giorgetti.05@gmail.com", "Daily News Update", "files/output.html")
 
 
 if __name__ == '__main__':

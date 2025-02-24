@@ -1,10 +1,16 @@
 import json
 import time
 from collections import deque
+from enum import Enum
 
 from google import genai
 from google.genai import types
 
+# Define the category enum.
+class NewsCategory(Enum):
+    NEWS = "News"
+    JOBS = "Jobs"
+    OPPORTUNITY = "Opportunity"
 
 class GeminiHandler:
     def __init__(self):
@@ -200,7 +206,10 @@ class GeminiHandler:
                             "contact": types.Schema(type="STRING"),
                             "description": types.Schema(type="STRING"),
                             "summary": types.Schema(type="STRING"),
-                            "category": types.Schema(type="STRING"),
+                            "category": types.Schema(
+                                type="STRING",
+                                enum=[category.value for category in NewsCategory]
+                            ),
                             "link": types.Schema(type="STRING"),
                             "image": types.Schema(type="STRING"),
                         },

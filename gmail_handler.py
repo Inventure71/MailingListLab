@@ -240,9 +240,6 @@ if __name__ == "__main__":
                 print(image)
         print("=" * 50 + "\n")'''
 
-    # Example: Send an email in HTML format
-    # Uncomment the following lines to send a test email.
-
     recipient = "roboticslabie.u@gmail.com"
     email_subject = "Test Email from Gmail API"
     html_body = """

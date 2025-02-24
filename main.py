@@ -58,7 +58,7 @@ def convert_news(data):
         list: A list of formatted news dictionaries.
     """
     news_items = data.get("news", [])
-    sample_news = []
+    news = []
     for item in news_items:
         news_entry = {
             "title": item.get("title", ""),
@@ -67,14 +67,15 @@ def convert_news(data):
             "contact": item.get("contact", ""),
             "description": item.get("description", ""),
             "summary": item.get("summary", ""),
+            "category": item.get("category", ""),
             "link": item.get("link", "")
         }
         # optionally add an image key. For instance, if an "image" key is present in the input
         if "image" in item:
             news_entry["image"] = item["image"]
 
-        sample_news.append(news_entry)
-    return sample_news
+        news.append(news_entry)
+    return news
 
 def main(gmail_handler, gemini_handler, email_creator, send_mail=True):
     # year, month, day
@@ -100,9 +101,10 @@ def main(gmail_handler, gemini_handler, email_creator, send_mail=True):
         location = news.get("location", "")
         images_videos_links = news.get("imageVideosLinks", "")
         contact = news.get("contact", "")
+        category = news.get("category", "")
         requirements = news.get("requirements", "")
 
-        news_text = f"Source: {source}\n Description: {description}\n Link: {link}\n Location: {location}\n Contact: {contact}\n Requirements: {requirements}\n Images and Videos Links: {images_videos_links}\n"
+        news_text = f"Source: {source}\n Description: {description}\n Link: {link}\n Location: {location}\n Contact: {contact}\n Category: {category}\nRequirements: {requirements}\n Images and Videos Links: {images_videos_links}\n"
 
         if link and len(link) > 5 and link != "Unknown":
             print("link:", link)
@@ -130,6 +132,7 @@ def main(gmail_handler, gemini_handler, email_creator, send_mail=True):
 - **Source**
 - **Article Description** (A more detailed description of the news)
 - **Article Summary** (A quick bite-sized summary of the news, only visible when hovering over the article description)
+- **Category** (1 category, e.g. Robotics, Artificial Intelligence, etc.)
 - **Link** (displayed as a clickable hyperlink)
 - **Location**
 - **Contact**

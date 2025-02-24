@@ -192,7 +192,7 @@ class GeminiHandler:
                     items=types.Schema(
                         type="OBJECT",
                         enum=[],
-                        required=["title", "source", "location", "description", "summary", "link"],
+                        required=["title", "source", "location", "description", "summary", "category", "link"],
                         properties={
                             "title": types.Schema(type="STRING"),
                             "source": types.Schema(type="STRING"),
@@ -200,6 +200,7 @@ class GeminiHandler:
                             "contact": types.Schema(type="STRING"),
                             "description": types.Schema(type="STRING"),
                             "summary": types.Schema(type="STRING"),
+                            "category": types.Schema(type="STRING"),
                             "link": types.Schema(type="STRING"),
                             "image": types.Schema(type="STRING"),
                         },

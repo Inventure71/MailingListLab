@@ -127,6 +127,26 @@ class GmailManager:
             userId="me", id=email["id"], body={"removeLabelIds": ["UNREAD"]}
         ).execute()
 
+    def archive_email(self, email):
+        """
+        Archives an email by removing the INBOX label.
+
+        Parameters:
+            email: Email object or message ID to archive
+        """
+        try:
+            email_id = email['id'] if isinstance(email, dict) else email
+            self.service.users().messages().modify(
+                userId='me',
+                id=email_id,
+                body={'removeLabelIds': ['INBOX']}
+            ).execute()
+            print(f"Email {email_id} archived successfully")
+            return True
+        except HttpError as error:
+            print(f"An error occurred while archiving: {error}")
+            return False
+
     def combine_unread_emails_text_in_period(self, start_date, end_date, max_results=15, unread_only=False, set_as_read=True, force_emails=None):
         """
         Combines the text content of all unread emails within a specified period and

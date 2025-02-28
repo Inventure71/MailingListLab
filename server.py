@@ -27,7 +27,6 @@ def check_new_emails(gm):
         if emails:
             logger.info(f"Found {len(emails)} new emails.")
 
-            # Load whitelist
             try:
                 with open("files/whitelist.json", "r") as f:
                     whitelist = json.load(f)
@@ -43,31 +42,26 @@ def check_new_emails(gm):
                     sender = next((h["value"] for h in headers if h["name"] == "From"), "Unknown Sender")
 
                     if "<" in sender and ">" in sender:
-                        sender_email = sender.split("<")[1].split(">")[0]  # Extracts email inside <>
+                        sender_email = sender.split("<")[1].split(">")[0]
                     else:
-                        sender_email = sender  # If no name is present, just return the whole value
+                        sender_email = sender
 
                     subject = next((h["value"] for h in headers if h["name"] == "Subject"), "No Subject")
 
                     logger.debug(f"Processing email from {sender_email} with subject '{subject}'")
 
-                    # Check if sender is in whitelist
                     if sender_email in whitelist["allowed_emails"]:
                         if subject.upper() == "REPOST":
                             logger.info(f"Processing repost from {sender_email}")
 
-                            # Mark email as read to prevent reprocessing
                             gm.set_as_read(email)
-
-                            # Pass the actual message_id to force_emails instead of the email object
-                            email_id = email['id']
-                            logger.info(f"Sending repost email with ID: {email_id}")
+                            gm.archive_email(email) # so it will not be used later
 
                             # Process the repost
                             create_email_procedurally(
                                 gmail_handler=gm,
                                 send_mail=True,
-                                force_emails=[email_id],  # Pass the email ID
+                                force_emails=[email],
                                 from_user=sender
                             )
 

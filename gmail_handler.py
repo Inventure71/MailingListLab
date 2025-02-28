@@ -91,6 +91,28 @@ class GmailManager:
         images = [img.get("src") for img in soup.find_all("img", src=True)]
         return links, images
 
+    def get_mails(self, max_results=5, unread_only=True):
+        if unread_only:
+            query = f"is:unread after:{start_date} before:{end_date}"
+        else:
+            query = f"after:{start_date} before:{end_date}"
+
+        try:
+            results = self.service.users().messages().list(
+                userId="me", q=query, maxResults=max_results
+            ).execute()
+            messages = results.get("messages", [])
+
+            if not messages:
+                print("No unread messages found in this period.")
+                return {"text": "", "links": [], "images": []}
+
+            return messages
+
+        except HttpError as error:
+            print(f"An error occurred: {error}")
+            return None
+
     def combine_unread_emails_text_in_period(self, start_date, end_date, max_results=15, unread_only=True, set_as_read=True):
         """
         Combines the text content of all unread emails within a specified period and
@@ -111,20 +133,8 @@ class GmailManager:
         combined_links = set()
         combined_images = set()
 
-        if unread_only:
-            query = f"is:unread after:{start_date} before:{end_date}"
-        else:
-            query = f"after:{start_date} before:{end_date}"
-
         try:
-            results = self.service.users().messages().list(
-                userId="me", q=query, maxResults=max_results
-            ).execute()
-            messages = results.get("messages", [])
-
-            if not messages:
-                print("No unread messages found in this period.")
-                return {"text": "", "links": [], "images": []}
+            messages = self.get_mails()
 
             for msg in messages:
                 message = self.service.users().messages().get(

@@ -22,6 +22,7 @@ def check_new_emails(gm):
             headers = message["payload"]["headers"]
 
             sender = next((h["value"] for h in headers if h["name"] == "From"), "Unknown Sender")
+
             if "<" in sender and ">" in sender:
                 sender_email = sender.split("<")[1].split(">")[0]  # Extracts email inside <>
             else:
@@ -43,7 +44,7 @@ def check_new_emails(gm):
                     print(f"Sharing email from {sender} with subject {subject}.")
                     gm.set_as_read(email)
 
-                    create_email_procedurally(send_mail=True, force_emails=[email])
+                    create_email_procedurally(send_mail=True, force_emails=[email], from_user=str(sender))
 
 
     else:

@@ -4,8 +4,7 @@ import multiprocessing
 from scrapy.crawler import CrawlerProcess
 from scrapy.utils.project import get_project_settings
 
-from compose_email import NewsEmailGenerator
-
+from compose_weekly_email import NewsEmailGenerator
 from compose_repost_email import RepostEmailGenerator
 from gmail_handler import GmailManager
 from spiders.page_content import PageContentSpider

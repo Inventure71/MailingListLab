@@ -43,6 +43,9 @@ def check_new_emails(gm):
                     print(f"Sharing email from {sender} with subject {subject}.")
                     gm.set_as_read(email)
 
+                    create_email_procedurally(send_mail=True, force_emails=[email])
+
+
 
     else:
         print("No new emails found.")
@@ -55,4 +58,3 @@ while True:
     print("Sleeping for 10 seconds...")
     time.sleep(10)
 
-    create_email_procedurally

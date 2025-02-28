@@ -176,6 +176,11 @@ class GmailManager:
             for msg in messages:
                 message = self.object_to_email(msg)
 
+                if not force_emails:
+                    subject = next((h["value"] for h in message["payload"]["headers"] if h["name"] == "Subject"), "No Subject")
+                    if subject.upper() == "REPOST":
+                        continue # skip repost emails when not reposting
+
                 plain_text, html_text = self.get_email_content(message.get("payload", {}))
 
                 # use plain text if available, otherwise extract text from HTML.

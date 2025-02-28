@@ -122,6 +122,8 @@ def create_email_procedurally(gmail_handler=None, gemini_handler=None, email_cre
             p.join()
             p.close()
 
+            print("Crawler finished.")
+
             with open("files/page.txt", "r") as f:
                 page_content = f.read()
                 print("Page Content:\n", page_content)

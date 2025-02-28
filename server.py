@@ -46,7 +46,6 @@ def check_new_emails(gm):
                     create_email_procedurally(send_mail=True, force_emails=[email])
 
 
-
     else:
         print("No new emails found.")
 

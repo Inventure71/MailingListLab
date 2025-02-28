@@ -5,7 +5,14 @@ import logging
 from gmail_handler import GmailManager
 from main import create_email_procedurally
 
-# Set up logging
+"""VARIABLES"""
+sent_newsletter = False
+start_of_newsletter = "2025/03/01"
+days = ["Monday", "Friday"] # Monday and Friday
+release_time = "16:00:00"
+"""VARIABLES"""
+
+
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -15,6 +22,36 @@ logging.basicConfig(
     ]
 )
 logger = logging.getLogger("email_monitor")
+
+def handle_newsletter():
+    global sent_newsletter, start_of_newsletter, days, release_time
+
+    date_object = datetime.now()
+    release_time = datetime.strptime(release_time, "%H:%M:%S").time()
+    release_datetime = datetime.combine(datetime.now().date(), release_time)
+
+    diff = datetime.now() - release_datetime
+
+    if not sent_newsletter:
+        if date_object.strftime("%A") in days:
+            print(f"It's {date_object.strftime('%A')}")
+
+            if diff.total_seconds() >= 0 and diff.total_seconds() <= 600:
+                print("It's time to send the newsletter")
+
+                sent_newsletter = True
+
+                create_email_procedurally(
+                    send_mail=True,
+                )
+
+            # if datetime.now().strftime("%H:%M:%S") >= release_time:
+            #    print("It's time to send the newsletter")
+
+    else:
+        if diff.total_seconds() > 6000:
+            print("Resetting newsletter flag")
+            sent_newsletter = False
 
 
 def check_new_emails(gm):
@@ -57,7 +94,6 @@ def check_new_emails(gm):
                             gm.set_as_read(email)
                             gm.archive_email(email) # so it will not be used later
 
-                            # Process the repost
                             create_email_procedurally(
                                 gmail_handler=gm,
                                 send_mail=True,
@@ -82,8 +118,12 @@ def main():
 
         while True:
             check_new_emails(gm)
+
+            handle_newsletter()
+
             logger.debug("Sleeping for 10 seconds...")
             time.sleep(10)
+
     except KeyboardInterrupt:
         logger.info("Email monitor service stopped by user")
     except Exception as e:

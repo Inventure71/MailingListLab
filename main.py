@@ -5,6 +5,8 @@ from scrapy.crawler import CrawlerProcess
 from scrapy.utils.project import get_project_settings
 
 from compose_email import NewsEmailGenerator
+
+from compose_repost_email import RepostEmailGenerator
 from gmail_handler import GmailManager
 from spiders.page_content import PageContentSpider
 from use_gemini import GeminiHandler
@@ -77,7 +79,7 @@ def convert_news(data):
         news.append(news_entry)
     return news
 
-def create_email_procedurally(gmail_handler=None, gemini_handler=None, email_creator=None, send_mail=True, force_emails=None):
+def create_email_procedurally(gmail_handler=None, gemini_handler=None, email_creator=None, send_mail=True, force_emails=None, from_user=None):
     if not gmail_handler:
         gmail_handler = GmailManager()
     if not gemini_handler:
@@ -183,7 +185,14 @@ Here are the news articles data:
     response_dict = json.loads(response)
     processed_news = convert_news(response_dict)
 
-    email_html = email_creator.generate_email(processed_news)
+
+    if force_emails and from_user:
+        # use different class for repost emails
+        rm = RepostEmailGenerator(shared_by=from_user)
+        email_html = rm.generate_email(processed_news)
+    else:
+        # weekly class
+        email_html = email_creator.generate_email(processed_news)
 
     with open("files/output.html", "w", encoding="utf-8") as f:
         f.write(email_html)

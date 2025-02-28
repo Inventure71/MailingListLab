@@ -77,12 +77,19 @@ def convert_news(data):
         news.append(news_entry)
     return news
 
-def create_email_procedurally(gmail_handler, gemini_handler, email_creator, send_mail=True):
+def create_email_procedurally(gmail_handler=None, gemini_handler=None, email_creator=None, send_mail=True, force_emails=None):
+    if not gmail_handler:
+        gmail_handler = GmailManager()
+    if not gemini_handler:
+        gemini_handler = GeminiHandler()
+    if not email_creator:
+        email_creator = NewsEmailGenerator()
+
     # year, month, day
     start_date = "2025/02/11"
     end_date = "2025/02/19"
 
-    combined_text = gmail_handler.combine_unread_emails_text_in_period(start_date, end_date, unread_only=False)
+    combined_text = gmail_handler.combine_unread_emails_text_in_period(start_date, end_date, unread_only=False, force_emails=force_emails)
     print("Combined Email Text:\n", combined_text)
 
     response = gemini_handler.retrieve_news_gemini(combined_text)

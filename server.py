@@ -1,8 +1,9 @@
-import json
 import time
 from datetime import datetime, timedelta
-import flask
+import json
 from gmail_handler import GmailManager
+from main import create_email_procedurally
+
 
 def check_new_emails(gm):
     today = datetime.now().strftime("%Y/%m/%d")
@@ -53,3 +54,5 @@ while True:
     check_new_emails(gm)
     print("Sleeping for 10 seconds...")
     time.sleep(10)
+
+    create_email_procedurally

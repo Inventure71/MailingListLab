@@ -77,7 +77,7 @@ def convert_news(data):
         news.append(news_entry)
     return news
 
-def main(gmail_handler, gemini_handler, email_creator, send_mail=True):
+def create_email_procedurally(gmail_handler, gemini_handler, email_creator, send_mail=True):
     # year, month, day
     start_date = "2025/02/11"
     end_date = "2025/02/19"
@@ -192,4 +192,4 @@ if __name__ == '__main__':
     #gmail_handler.send_email_from_html_file("matteo.giorgetti.05@gmail.com", "Daily News Update", "output.html")
 
 
-    main(gmail_handler, gemini_handler, email_creator)
+    create_email_procedurally(gmail_handler, gemini_handler, email_creator)

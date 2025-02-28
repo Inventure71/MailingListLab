@@ -127,7 +127,7 @@ class GmailManager:
             userId="me", id=email["id"], body={"removeLabelIds": ["UNREAD"]}
         ).execute()
 
-    def combine_unread_emails_text_in_period(self, start_date, end_date, max_results=15, unread_only=False, set_as_read=True):
+    def combine_unread_emails_text_in_period(self, start_date, end_date, max_results=15, unread_only=False, set_as_read=True, force_emails=None):
         """
         Combines the text content of all unread emails within a specified period and
         extracts all hyperlinks and image URLs from their HTML content.
@@ -148,7 +148,10 @@ class GmailManager:
         combined_images = set()
 
         try:
-            messages = self.get_emails(start_date, end_date, max_results=max_results, unread_only=unread_only, set_as_read=set_as_read)
+            if force_emails:
+                messages = force_emails
+            else:
+                messages = self.get_emails(start_date, end_date, max_results=max_results, unread_only=unread_only, set_as_read=set_as_read)
 
             for msg in messages:
                 message = self.object_to_email(msg)

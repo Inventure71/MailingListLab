@@ -21,20 +21,27 @@ def check_new_emails(gm):
             headers = message["payload"]["headers"]
 
             sender = next((h["value"] for h in headers if h["name"] == "From"), "Unknown Sender")
+            if "<" in sender and ">" in sender:
+                sender_email = sender.split("<")[1].split(">")[0]  # Extracts email inside <>
+            else:
+                sender_email = sender  # If no name is present, just return the whole value
+
             subject = next((h["value"] for h in headers if h["name"] == "Subject"), "No Subject")
 
             #plain_text, html_text = self.get_email_content(message.get("payload", {}))
+            #print(f"Sender: {sender_email}")
 
-            for user in whitelist:
-                if sender == user:
-                    print(f"Found user: {user['name']}. (DEBUG)")
+            for user in whitelist["allowed_emails"]:
+                #print(f"Checking user: {user}.")
+                if sender_email == user:
+                    print(f"Found user: {user}. (DEBUG)")
                 if subject == "REPOST":
                     print(f"Found subject: {subject}. (DEBUG)")
 
-                if sender == user and subject == "REPOST":
+                if sender_email == user and subject == "REPOST":
                     print(f"Sharing email from {sender} with subject {subject}.")
+                    gm.set_as_read(email)
 
-                    message
 
     else:
         print("No new emails found.")

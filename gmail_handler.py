@@ -121,10 +121,12 @@ class GmailManager:
             print(f"An error occurred: {error}")
             return None
 
-    def check_new_emails(self):
-        self.get_emails()
+    def read_email(self, email):
+        return self.service.users().messages().get(
+            userId="me", id=email["id"], format="full"
+        ).execute()
 
-    def combine_unread_emails_text_in_period(self, start_date, end_date, max_results=15, unread_only=True, set_as_read=True):
+    def combine_unread_emails_text_in_period(self, start_date, end_date, max_results=15, unread_only=False, set_as_read=True):
         """
         Combines the text content of all unread emails within a specified period and
         extracts all hyperlinks and image URLs from their HTML content.
@@ -148,9 +150,7 @@ class GmailManager:
             messages = self.get_emails(start_date, end_date, max_results=max_results, unread_only=unread_only, set_as_read=set_as_read)
 
             for msg in messages:
-                message = self.service.users().messages().get(
-                    userId="me", id=msg["id"], format="full"
-                ).execute()
+                message = self.read_email(msg)
 
                 plain_text, html_text = self.get_email_content(message.get("payload", {}))
 

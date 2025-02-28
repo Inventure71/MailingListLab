@@ -109,11 +109,7 @@ class GmailManager:
 
             if set_as_read:
                 for msg in messages:
-                    self.service.users().messages().modify(
-                        userId="me",
-                        id=msg["id"],
-                        body={"removeLabelIds": ["UNREAD"]}
-                    ).execute()
+                    self.set_as_read(msg)
 
             return messages
 
@@ -121,9 +117,14 @@ class GmailManager:
             print(f"An error occurred: {error}")
             return None
 
-    def read_email(self, email):
+    def object_to_email(self, email):
         return self.service.users().messages().get(
             userId="me", id=email["id"], format="full"
+        ).execute()
+
+    def set_as_read(self, email):
+        self.service.users().messages().modify(
+            userId="me", id=email["id"], body={"removeLabelIds": ["UNREAD"]}
         ).execute()
 
     def combine_unread_emails_text_in_period(self, start_date, end_date, max_results=15, unread_only=False, set_as_read=True):
@@ -150,7 +151,7 @@ class GmailManager:
             messages = self.get_emails(start_date, end_date, max_results=max_results, unread_only=unread_only, set_as_read=set_as_read)
 
             for msg in messages:
-                message = self.read_email(msg)
+                message = self.object_to_email(msg)
 
                 plain_text, html_text = self.get_email_content(message.get("payload", {}))
 

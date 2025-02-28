@@ -11,21 +11,30 @@ def check_new_emails(gm):
     emails = gm.get_emails(start_date=today, end_date=tomorrow, max_results=10, unread_only=True, set_as_read=False)
 
     if emails:
+        print(f"Found {len(emails)} new emails.")
+
         whitelist = json.load(open("files/whitelist.json"))
 
         for email in emails:
-            message = gm.read_email(email)
+            message = gm.object_to_email(email)
 
             headers = message["payload"]["headers"]
 
             sender = next((h["value"] for h in headers if h["name"] == "From"), "Unknown Sender")
+            subject = next((h["value"] for h in headers if h["name"] == "Subject"), "No Subject")
 
-            #subject = next((h["value"] for h in headers if h["name"] == "Subject"), "No Subject")
             #plain_text, html_text = self.get_email_content(message.get("payload", {}))
 
             for user in whitelist:
                 if sender == user:
-                    print(f"Found user: {user['name']}, sharing this email.")
+                    print(f"Found user: {user['name']}. (DEBUG)")
+                if subject == "REPOST":
+                    print(f"Found subject: {subject}. (DEBUG)")
+
+                if sender == user and subject == "REPOST":
+                    print(f"Sharing email from {sender} with subject {subject}.")
+
+                    message
 
     else:
         print("No new emails found.")

@@ -91,7 +91,7 @@ class GmailManager:
         images = [img.get("src") for img in soup.find_all("img", src=True)]
         return links, images
 
-    def get_mails(self, max_results=5, unread_only=True):
+    def get_emails(self, start_date, end_date, max_results=5, unread_only=True, set_as_read=False):
         if unread_only:
             query = f"is:unread after:{start_date} before:{end_date}"
         else:
@@ -107,11 +107,22 @@ class GmailManager:
                 print("No unread messages found in this period.")
                 return {"text": "", "links": [], "images": []}
 
+            if set_as_read:
+                for msg in messages:
+                    self.service.users().messages().modify(
+                        userId="me",
+                        id=msg["id"],
+                        body={"removeLabelIds": ["UNREAD"]}
+                    ).execute()
+
             return messages
 
         except HttpError as error:
             print(f"An error occurred: {error}")
             return None
+
+    def check_new_emails(self):
+        self.get_emails()
 
     def combine_unread_emails_text_in_period(self, start_date, end_date, max_results=15, unread_only=True, set_as_read=True):
         """
@@ -134,7 +145,7 @@ class GmailManager:
         combined_images = set()
 
         try:
-            messages = self.get_mails()
+            messages = self.get_emails(start_date, end_date, max_results=max_results, unread_only=unread_only, set_as_read=set_as_read)
 
             for msg in messages:
                 message = self.service.users().messages().get(
@@ -157,13 +168,6 @@ class GmailManager:
                     links, images = self.extract_links_and_images(html_text)
                     combined_links.update(links)
                     combined_images.update(images)
-
-                if set_as_read: # mark the email as read
-                    self.service.users().messages().modify(
-                        userId="me",
-                        id=msg["id"],
-                        body={"removeLabelIds": ["UNREAD"]}
-                    ).execute()
 
             text = f"{combined_text.strip()}\nLinks: {combined_links}\nImages{combined_images}"
 

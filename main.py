@@ -120,6 +120,7 @@ def create_email_procedurally(gmail_handler=None, gemini_handler=None, email_cre
 
             p = multiprocessing.Process(target=run_crawler, args=(link,))
             p.start()
+            print("Crawler Started.")
             p.join()
             p.close()
 

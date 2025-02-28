@@ -7,9 +7,9 @@ from main import create_email_procedurally
 
 """VARIABLES"""
 sent_newsletter = False
-start_of_newsletter = "2025/03/01"
+start_of_newsletter_str = "2025/03/01"
 days = ["Monday", "Friday"] # Monday and Friday
-release_time = "16:00:00"
+release_time_str = "12:23:00"
 """VARIABLES"""
 
 
@@ -23,11 +23,12 @@ logging.basicConfig(
 )
 logger = logging.getLogger("email_monitor")
 
+
 def handle_newsletter():
-    global sent_newsletter, start_of_newsletter, days, release_time
+    global sent_newsletter, start_of_newsletter_str, days, release_time_str
 
     date_object = datetime.now()
-    release_time = datetime.strptime(release_time, "%H:%M:%S").time()
+    release_time = datetime.strptime(release_time_str, "%H:%M:%S").time()
     release_datetime = datetime.combine(datetime.now().date(), release_time)
 
     diff = datetime.now() - release_datetime

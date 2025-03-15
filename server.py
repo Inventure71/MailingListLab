@@ -5,6 +5,11 @@ import logging
 from gmail_handler import GmailManager
 from main import create_email_procedurally
 
+
+#TODO: USE GOOGLE FORM FOR RESPONSES
+#TODO: SCRAPE A SPECIFIC WEBSITE FOR LATEST MORE GLOBAL NEWS
+
+
 """VARIABLES"""
 sent_newsletter = False
 start_of_newsletter_str = "2025/03/01"

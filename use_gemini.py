@@ -170,6 +170,7 @@ class GeminiHandler:
                 "- Include the link to the article if available.\n"
                 "- Job opportunities should not be included in the news.\n"
                 "- The relevancy of the news should be a number between 0 and 100.\n"
+                "- The relevancy of the news should also be based on their uniqueness, if two or more similar news are found lower the score for the subsequent news.\n"
                 "- In the imageVideoLinks include all the links of images and videos that are related to the news.\n"
             ),
         )

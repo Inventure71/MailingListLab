@@ -31,24 +31,52 @@ def run_news_crawler():
     return []
 
 def extract_top_N(response, N=5):
+    """
+    Extract the top N news items from the response, sorted by relevancy.
+
+    This function also ensures that no duplicate news from the same website is included
+    by checking the 'source' field of each news item.
+
+    Args:
+        response (str): JSON string containing news items.
+        N (int): Number of top news items to extract.
+
+    Returns:
+        list: Top N news items sorted by relevancy, with no duplicates from the same website.
+    """
     # parse the JSON string into a Python dictionary
     response_data = json.loads(response)
 
     news_items = response_data.get("news", [])
 
     news_list = []
+    # Keep track of sources we've already included to avoid duplicates
+    included_sources = set()
+
     for news in news_items:
         relevancy = news.get("relevancy", 0)
+        source = news.get("source", "")
+
+        # Skip if we've already included news from this source
+        if source and source in included_sources:
+            continue
+
         added = False
 
         for x in news_list:
             if x.get("relevancy", 0) < relevancy:
                 news_list.insert(news_list.index(x), news)
                 added = True
+                # Add the source to our set of included sources
+                if source:
+                    included_sources.add(source)
                 break
 
         if len(news_list) == 0 or not added:
             news_list.append(news)
+            # Add the source to our set of included sources
+            if source:
+                included_sources.add(source)
 
     return news_list[:N]
 

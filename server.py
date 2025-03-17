@@ -7,7 +7,6 @@ from main import create_email_procedurally
 
 
 #TODO: USE GOOGLE FORM FOR RESPONSES
-#TODO: SCRAPE A SPECIFIC WEBSITE FOR LATEST MORE GLOBAL NEWS
 
 
 """VARIABLES"""

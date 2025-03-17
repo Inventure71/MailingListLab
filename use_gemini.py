@@ -9,8 +9,9 @@ from google.genai import types
 # Define the category enum.
 class NewsCategory(Enum):
     NEWS = "News"
-    JOBS = "Jobs"
+    #JOBS = "Jobs"
     OPPORTUNITY = "Opportunity"
+    OTHER = "Other"
 
 class GeminiHandler:
     def __init__(self):
@@ -167,6 +168,8 @@ class GeminiHandler:
                 "For the news, the exact date is not important.\n"
                 "- The main targets for the news are undergraduate, graduate, and master students."
                 "- Include the link to the article if available.\n"
+                "- Job opportunities should not be included in the news.\n"
+                "- The relevancy of the news should be a number between 0 and 100.\n"
                 "- In the imageVideoLinks include all the links of images and videos that are related to the news.\n"
             ),
         )

@@ -3,10 +3,11 @@ from typing import List, Dict
 from configs.mail_colors import MailColor
 
 class NewsEmailGenerator:
-    def __init__(self, title: str = "Weekly News", footer_text: str = "Powered by Ie Robotics & AI Lab"):
+    def __init__(self, title: str = "Weekly News", footer_text: str = "Powered by Ie Robotics & AI Lab", skip_images: bool = True):
         self.title = title
         self.footer_text = footer_text
         self.category_colors = MailColor.category_colors
+        self.skip_images = skip_images
 
     def generate_header(self) -> str:
         """Generate the header of the email based on the title variable."""
@@ -29,7 +30,7 @@ class NewsEmailGenerator:
             <td style="padding: 8px 20px;">
                 <div style="background-color: #fafafa; border: 2px solid {border_color}; border-radius: 8px; 
                            margin-bottom: 8px; padding: 12px;">
-                    {'<img src="' + article["image"] + '" alt="Article Image" style="width: 100%; display: block; margin-bottom: 12px; border-radius: 8px;">' if "image" in article else ""}
+                    {'<img src="' + article["image"] + '" alt="Article Image" style="width: 100%; display: block; margin-bottom: 12px; border-radius: 8px;">' if "image" in article and not self.skip_images else ""}
                     <div style="font-size: 20px; color: #333333; font-weight: bold; margin-bottom: 8px;">
                         {article["title"]}
                     </div>
@@ -62,7 +63,8 @@ class NewsEmailGenerator:
 
     def generate_category_section(self, category: str, articles: List[Dict]) -> str:
         """Generate a section for a specific category with a colored header."""
-        header_color = NewsEmailGenerator.CATEGORY_COLORS.get(category, NewsEmailGenerator.CATEGORY_COLORS["General"])
+
+        header_color = self.category_colors.get(category, MailColor.category_colors["General"])
         articles_html = "\n".join(self.generate_article(article) for article in articles)
         return f'''
         <tr>

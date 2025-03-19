@@ -13,6 +13,7 @@ class NewsCategory(Enum):
     EVENTS = "Events"
     #JOBS = "Jobs"
     OPPORTUNITY = "Opportunity"
+    WORKSHOPS = "Workshops"
     OTHER = "Other"
 
 class GeminiHandler:
@@ -167,8 +168,8 @@ class GeminiHandler:
                 "Artificial Intelligence\nAutomation\nDecentralized Technologies\nEthics in Technology\n"
                 "Interdisciplinary Research\nInnovation and Design\n\n"
                 "- Today is the 19/02/2025, so include only events that have not happened yet. "
-                "For the news, the exact date is not important.\n"
-                "- The main targets for the news are undergraduate, graduate, and master students."
+                "- For the news, the exact date is not important.\n"
+                "- The main targets for the news are undergraduate and graduate students."
                 "- Include the link to the article if available.\n"
                 "- Job opportunities should not be included in the news.\n"
                 "- The relevancy of the news should be a number between 0 and 100.\n"

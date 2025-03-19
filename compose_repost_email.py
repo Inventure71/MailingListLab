@@ -5,7 +5,7 @@ from configs.mail_colors import MailColor
 
 class RepostEmailGenerator:
     def __init__(self, title: str = "News Repost", shared_by: str = "Unknown",
-                 footer_text: str = "Powered by Ie Robotics & AI Lab"):
+                 footer_text: str = "Powered by Ie Robotics & AI Lab", skip_images: bool = True):
         """
         Initializes the repost email generator.
 
@@ -13,11 +13,13 @@ class RepostEmailGenerator:
             title (str): The title of the repost email.
             shared_by (str): The name or email of the user who requested the repost.
             footer_text (str): Footer text for the email.
+            skip_images (bool): Whether to skip including images in the email.
         """
         self.title = title
         self.shared_by = shared_by
         self.footer_text = footer_text
         self.category_colors = MailColor.category_colors
+        self.skip_images = skip_images
 
     def generate_header(self) -> str:
         """Generate the header of the email including who shared the repost."""
@@ -45,7 +47,7 @@ class RepostEmailGenerator:
             <td style="padding: 8px 20px;">
                 <div style="background-color: #fafafa; border: 2px solid {border_color}; border-radius: 8px; 
                            margin-bottom: 8px; padding: 12px;">
-                    {'<img src="' + article["image"] + '" alt="Article Image" style="width: 100%; display: block; margin-bottom: 12px; border-radius: 8px;">' if "image" in article else ""}
+                    {'<img src="' + article["image"] + '" alt="Article Image" style="width: 100%; display: block; margin-bottom: 12px; border-radius: 8px;">' if "image" in article and not self.skip_images else ""}
                     <div style="font-size: 20px; color: #333333; font-weight: bold; margin-bottom: 8px;">
                         {article["title"]}
                     </div>

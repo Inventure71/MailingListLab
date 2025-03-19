@@ -1,19 +1,12 @@
 from collections import defaultdict
 from typing import List, Dict
-
+from files.mail_colors import MailColor
 
 class NewsEmailGenerator:
-    CATEGORY_COLORS = {
-        "News": "#007BFF",
-        "Jobs": "#28A745",
-        "Presentation": "#DC3545",
-        "Opportunity": "#FFC107",
-        "General": "#6c757d"  # default color if no category is provided
-    }
-
     def __init__(self, title: str = "Weekly News", footer_text: str = "Powered by Ie Robotics & AI Lab"):
         self.title = title
         self.footer_text = footer_text
+        self.category_colors = MailColor.category_colors
 
     def generate_header(self) -> str:
         """Generate the header of the email based on the title variable."""
@@ -25,11 +18,12 @@ class NewsEmailGenerator:
             </td>
         </tr>'''
 
-    @staticmethod
-    def generate_article(article: Dict) -> str:
+    def generate_article(self, article: Dict) -> str:
         """Generate the HTML for a single news article."""
         category = article.get("category", "General")
-        border_color = NewsEmailGenerator.CATEGORY_COLORS.get(category, NewsEmailGenerator.CATEGORY_COLORS["General"])
+
+        border_color = self.category_colors.get(category, MailColor.category_colors["General"])
+
         return f'''
         <tr>
             <td style="padding: 8px 20px;">

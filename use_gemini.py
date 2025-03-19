@@ -9,6 +9,8 @@ from google.genai import types
 # Define the category enum.
 class NewsCategory(Enum):
     NEWS = "News"
+    TALKS = "Talks"
+    EVENTS = "Events"
     #JOBS = "Jobs"
     OPPORTUNITY = "Opportunity"
     OTHER = "Other"

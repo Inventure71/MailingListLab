@@ -70,7 +70,7 @@ def check_new_emails(gm):
             logger.info(f"Found {len(emails)} new emails.")
 
             try:
-                with open("files/whitelist.json", "r") as f:
+                with open("configs/whitelist.json", "r") as f:
                     whitelist = json.load(f)
             except (FileNotFoundError, json.JSONDecodeError) as e:
                 logger.error(f"Error loading whitelist: {e}")

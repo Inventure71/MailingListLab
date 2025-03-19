@@ -1,6 +1,6 @@
 from typing import List, Dict
 
-from files.mail_colors import MailColor
+from configs.mail_colors import MailColor
 
 
 class RepostEmailGenerator:

@@ -1,6 +1,6 @@
 from collections import defaultdict
 from typing import List, Dict
-from files.mail_colors import MailColor
+from configs.mail_colors import MailColor
 
 class NewsEmailGenerator:
     def __init__(self, title: str = "Weekly News", footer_text: str = "Powered by Ie Robotics & AI Lab"):

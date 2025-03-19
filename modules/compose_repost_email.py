@@ -18,7 +18,8 @@ class RepostEmailGenerator:
         self.shared_by = shared_by
         self.footer_text = footer_text
         with open("configs/mail_configs.json", 'r') as file:
-            self.category_colors = json.load(file)
+            config_data = json.load(file)
+            self.category_colors = config_data["category_colors"]
         self.skip_images = skip_images
 
     def generate_header(self) -> str:
@@ -38,9 +39,9 @@ class RepostEmailGenerator:
 
     def generate_article(self, article: Dict) -> str:
         """Generate the HTML for a single news article."""
-        category = article.get("category", "General")
+        category = article.get("category", "Other")
 
-        border_color = self.category_colors.get(category, self.category_colors["General"])
+        border_color = self.category_colors.get(category, self.category_colors["Other"])
 
         return f'''
         <tr>

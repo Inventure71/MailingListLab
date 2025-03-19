@@ -6,22 +6,17 @@ from enum import Enum
 from google import genai
 from google.genai import types
 
-# Define the category enum.
-class NewsCategory(Enum):
-    NEWS = "News"
-    TALKS = "Talks"
-    EVENTS = "Events"
-    #JOBS = "Jobs"
-    OPPORTUNITY = "Opportunity"
-    WORKSHOPS = "Workshops"
-    OTHER = "Other"
-
 class GeminiHandler:
     def __init__(self):
         self.key = json.load(open("credentials/key.json"))["key"]
         self.config = None
         self.model_name = "gemini-2.0-flash-exp" # "gemini-2.0-flash"
         self.client = genai.Client(api_key=self.key)
+
+        with open("configs/mail_configs.json", 'r') as file:
+            category_colors = json.load(file)["category_colors"]
+
+        self.NewsCategory = Enum('NewsCategory', {category.upper(): category for category in category_colors.keys()})
 
         self.requests_timestamps = deque(maxlen=10)  # store timestamps of last 10 requests
         self.rate_limit = 10  # requests number
@@ -215,7 +210,7 @@ class GeminiHandler:
                             "summary": types.Schema(type="STRING"),
                             "category": types.Schema(
                                 type="STRING",
-                                enum=[category.value for category in NewsCategory]
+                                enum=[category.value for category in self.NewsCategory]
                             ),
                             "link": types.Schema(type="STRING"),
                             "image": types.Schema(type="STRING"),

@@ -7,7 +7,8 @@ class NewsEmailGenerator:
         self.title = title
         self.footer_text = footer_text
         with open("configs/mail_configs.json", 'r') as file:
-            self.category_colors = json.load(file)
+            config_data = json.load(file)
+            self.category_colors = config_data["category_colors"]
         self.skip_images = skip_images
 
     def generate_header(self) -> str:
@@ -22,9 +23,9 @@ class NewsEmailGenerator:
 
     def generate_article(self, article: Dict) -> str:
         """Generate the HTML for a single news article."""
-        category = article.get("category", "General")
+        category = article.get("category", "Other")
 
-        border_color = self.category_colors.get(category, MailColor.category_colors["General"])
+        border_color = self.category_colors.get(category, self.category_colors["Other"])
 
         return f'''
         <tr>
@@ -65,7 +66,7 @@ class NewsEmailGenerator:
     def generate_category_section(self, category: str, articles: List[Dict]) -> str:
         """Generate a section for a specific category with a colored header."""
 
-        header_color = self.category_colors.get(category, MailColor.category_colors["General"])
+        header_color = self.category_colors.get(category, self.category_colors["Other"])
         articles_html = "\n".join(self.generate_article(article) for article in articles)
         return f'''
         <tr>
@@ -89,7 +90,7 @@ class NewsEmailGenerator:
         """Generate the full HTML content of the email, grouping articles by category."""
         articles_by_category = defaultdict(list)
         for article in articles:
-            category = article.get("category", "General")
+            category = article.get("category", "Other")
             articles_by_category[category].append(article)
 
         sorted_categories = sorted(articles_by_category.keys())

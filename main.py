@@ -5,12 +5,12 @@ import os
 from scrapy.crawler import CrawlerProcess
 from scrapy.utils.project import get_project_settings
 
-from compose_weekly_email import NewsEmailGenerator
-from compose_repost_email import RepostEmailGenerator
-from gmail_handler import GmailManager
+from modules.compose_weekly_email import NewsEmailGenerator
+from modules.compose_repost_email import RepostEmailGenerator
+from modules.gmail_handler import GmailManager
 from spiders.page_content import PageContentSpider
 from spiders.news_spider import NewsSpider
-from use_gemini import GeminiHandler
+from modules.use_gemini import GeminiHandler
 
 
 def run_crawler(link):

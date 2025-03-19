@@ -171,5 +171,5 @@ if __name__ == "__main__":
     generator = NewsEmailGenerator()
     email_html = generator.generate_email(sample_news)
 
-    with open("files/output.html", "w", encoding="utf-8") as f:
+    with open("../files/output.html", "w", encoding="utf-8") as f:
         f.write(email_html)

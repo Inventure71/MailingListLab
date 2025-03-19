@@ -2,7 +2,7 @@ import time
 from datetime import datetime, timedelta
 import json
 import logging
-from gmail_handler import GmailManager
+from modules.gmail_handler import GmailManager
 from main import create_email_procedurally
 
 

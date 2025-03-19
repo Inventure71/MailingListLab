@@ -1,6 +1,5 @@
+import json
 from typing import List, Dict
-
-from configs.mail_colors import MailColor
 
 
 class RepostEmailGenerator:
@@ -18,7 +17,8 @@ class RepostEmailGenerator:
         self.title = title
         self.shared_by = shared_by
         self.footer_text = footer_text
-        self.category_colors = MailColor.category_colors
+        with open("configs/mail_configs.json", 'r') as file:
+            self.category_colors = json.load(file)
         self.skip_images = skip_images
 
     def generate_header(self) -> str:

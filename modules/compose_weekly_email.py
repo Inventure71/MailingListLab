@@ -1,12 +1,13 @@
+import json
 from collections import defaultdict
 from typing import List, Dict
-from configs.mail_colors import MailColor
 
 class NewsEmailGenerator:
     def __init__(self, title: str = "Weekly News", footer_text: str = "Powered by Ie Robotics & AI Lab", skip_images: bool = True):
         self.title = title
         self.footer_text = footer_text
-        self.category_colors = MailColor.category_colors
+        with open("configs/mail_configs.json", 'r') as file:
+            self.category_colors = json.load(file)
         self.skip_images = skip_images
 
     def generate_header(self) -> str:

@@ -1,14 +1,16 @@
 import json
 import multiprocessing
+import os
 
 from scrapy.crawler import CrawlerProcess
 from scrapy.utils.project import get_project_settings
 
-from compose_weekly_email import NewsEmailGenerator
-from compose_repost_email import RepostEmailGenerator
-from gmail_handler import GmailManager
+from modules.compose_weekly_email import NewsEmailGenerator
+from modules.compose_repost_email import RepostEmailGenerator
+from modules.gmail_handler import GmailManager
 from spiders.page_content import PageContentSpider
-from use_gemini import GeminiHandler
+from spiders.news_spider import NewsSpider
+from modules.use_gemini import GeminiHandler
 
 
 def run_crawler(link):
@@ -16,25 +18,65 @@ def run_crawler(link):
     process.crawl(PageContentSpider, url=link)
     process.start()
 
+def run_news_crawler():
+    process = CrawlerProcess(get_project_settings())
+    process.crawl(NewsSpider)
+    process.start()
+
+    # Return the scraped news items
+    news_path = os.path.join('files', 'latest_news.json')
+    if os.path.exists(news_path):
+        with open(news_path, 'r') as f:
+            return json.load(f)
+    return []
+
 def extract_top_N(response, N=5):
+    """
+    Extract the top N news items from the response, sorted by relevancy.
+
+    This function also ensures that no duplicate news from the same website is included
+    by checking the 'source' field of each news item.
+
+    Args:
+        response (str): JSON string containing news items.
+        N (int): Number of top news items to extract.
+
+    Returns:
+        list: Top N news items sorted by relevancy, with no duplicates from the same website.
+    """
     # parse the JSON string into a Python dictionary
     response_data = json.loads(response)
 
     news_items = response_data.get("news", [])
 
     news_list = []
+    # Keep track of sources we've already included to avoid duplicates
+    included_sources = set()
+
     for news in news_items:
         relevancy = news.get("relevancy", 0)
+        source = news.get("source", "")
+
+        # Skip if we've already included news from this source
+        if source and source in included_sources:
+            continue
+
         added = False
 
         for x in news_list:
             if x.get("relevancy", 0) < relevancy:
                 news_list.insert(news_list.index(x), news)
                 added = True
+                # Add the source to our set of included sources
+                if source:
+                    included_sources.add(source)
                 break
 
         if len(news_list) == 0 or not added:
             news_list.append(news)
+            # Add the source to our set of included sources
+            if source:
+                included_sources.add(source)
 
     return news_list[:N]
 
@@ -78,7 +120,7 @@ def convert_news(data):
         news.append(news_entry)
     return news
 
-def create_email_procedurally(gmail_handler=None, gemini_handler=None, email_creator=None, send_mail=True, force_emails=None, from_user=None):
+def create_email_procedurally(gmail_handler=None, gemini_handler=None, email_creator=None, send_mail=True, force_emails=None, from_user=None, include_website_news=True):
     if not gmail_handler:
         gmail_handler = GmailManager()
     if not gemini_handler:
@@ -93,6 +135,26 @@ def create_email_procedurally(gmail_handler=None, gemini_handler=None, email_cre
     combined_text = gmail_handler.combine_unread_emails_text_in_period(start_date, end_date, unread_only=False, force_emails=force_emails)
     print("Combined Email Text:\n", combined_text)
 
+    if include_website_news:
+        print("Scraping latest news from website...")
+        p = multiprocessing.Process(target=run_news_crawler)
+        p.start()
+        p.join()
+        p.close()
+
+        # Load the scraped news
+        website_news = run_news_crawler()
+        if website_news:
+            print(f"Found {len(website_news)} news items from website")
+
+            # Convert website_news list to a string representation
+            website_news_text = json.dumps(website_news, indent=2)
+            combined_text += "\n\n### WEBSITE NEWS ###\n" + website_news_text
+
+            print("Added website news to the combined text")
+        else:
+            print("No news found from website")
+
     response = gemini_handler.retrieve_news_gemini(combined_text)
     print("Response:\n", response)
 
@@ -103,16 +165,21 @@ def create_email_procedurally(gmail_handler=None, gemini_handler=None, email_cre
 
     for news in news_list:
         source = news.get("source", "")
-        description = news.get("brief description", "")
-        link = news.get("linkToAricle", "")
+        # Handle both formats: from Gemini and from NewsSpider
+        description = news.get("brief description", news.get("description", ""))
+        link = news.get("linkToAricle", news.get("link", ""))
         #relevancy = news.get("relevancy", 0)
         location = news.get("location", "")
         images_videos_links = news.get("imageVideosLinks", "")
         contact = news.get("contact", "")
         category = news.get("category", "")
         requirements = news.get("requirements", "")
+        # Add title if available (from NewsSpider)
+        title = news.get("title", "")
 
-        news_text = f"Source: {source}\n Description: {description}\n Link: {link}\n Location: {location}\n Contact: {contact}\n Category: {category}\nRequirements: {requirements}\n Images and Videos Links: {images_videos_links}\n"
+        # Include title if available
+        title_text = f"Title: {title}\n" if title else ""
+        news_text = f"{title_text}Source: {source}\n Description: {description}\n Link: {link}\n Location: {location}\n Contact: {contact}\n Category: {category}\nRequirements: {requirements}\n Images and Videos Links: {images_videos_links}\n"
 
         if link and len(link) > 5 and link != "Unknown":
             print("link:", link)

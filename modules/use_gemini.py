@@ -6,18 +6,17 @@ from enum import Enum
 from google import genai
 from google.genai import types
 
-# Define the category enum.
-class NewsCategory(Enum):
-    NEWS = "News"
-    JOBS = "Jobs"
-    OPPORTUNITY = "Opportunity"
-
 class GeminiHandler:
     def __init__(self):
         self.key = json.load(open("credentials/key.json"))["key"]
         self.config = None
         self.model_name = "gemini-2.0-flash-exp" # "gemini-2.0-flash"
         self.client = genai.Client(api_key=self.key)
+
+        with open("configs/mail_configs.json", 'r') as file:
+            category_colors = json.load(file)["category_colors"]
+
+        self.NewsCategory = Enum('NewsCategory', {category.upper(): category for category in category_colors.keys()})
 
         self.requests_timestamps = deque(maxlen=10)  # store timestamps of last 10 requests
         self.rate_limit = 10  # requests number
@@ -164,9 +163,12 @@ class GeminiHandler:
                 "Artificial Intelligence\nAutomation\nDecentralized Technologies\nEthics in Technology\n"
                 "Interdisciplinary Research\nInnovation and Design\n\n"
                 "- Today is the 19/02/2025, so include only events that have not happened yet. "
-                "For the news, the exact date is not important.\n"
-                "- The main targets for the news are undergraduate, graduate, and master students."
+                "- For the news, the exact date is not important.\n"
+                "- The main targets for the news are undergraduate and graduate students."
                 "- Include the link to the article if available.\n"
+                "- Job opportunities should not be included in the news.\n"
+                "- The relevancy of the news should be a number between 0 and 100.\n"
+                "- The relevancy of the news should also be based on their uniqueness, if two or more similar news are found lower the score for the subsequent news.\n"
                 "- In the imageVideoLinks include all the links of images and videos that are related to the news.\n"
             ),
         )
@@ -208,7 +210,7 @@ class GeminiHandler:
                             "summary": types.Schema(type="STRING"),
                             "category": types.Schema(
                                 type="STRING",
-                                enum=[category.value for category in NewsCategory]
+                                enum=[category.value for category in self.NewsCategory]
                             ),
                             "link": types.Schema(type="STRING"),
                             "image": types.Schema(type="STRING"),
@@ -227,10 +229,11 @@ class GeminiHandler:
             response_schema=json_schema,
             response_mime_type="application/json",
             system_instruction=(
+                "- The general email should be accessible\n"
                 "- Only include images if provided in the prompt and the path is absolute\n"
                 "- If the location is not specified or is an online meeting say Online\n"
                 "- If contact is not included don't include it\n"
-                "- The description of the news should be a detailed description of the news\n"
+                "- The description of the news should be a detailed description of the news but written in easy terms\n"
                 "- The summary of the news should be a really quick bite-sized summary of the news\n"
                 "- Only include the link to the article or website of the news\n"
             ),

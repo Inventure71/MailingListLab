@@ -1,0 +1,7 @@
+{
+  "news_url": "https://www.therobotreport.com/",
+  "article_selector": ".post",
+  "title_selector": "h2.entry-title",
+  "link_selector": "h2.entry-title a",
+  "description_selector": ".entry-content p"
+}

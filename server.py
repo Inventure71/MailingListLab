@@ -13,7 +13,7 @@ from main import create_email_procedurally
 sent_newsletter = False
 start_of_newsletter_str = "2025/03/01"
 days = ["Monday", "Friday"] # Monday and Friday
-release_time_str = "12:00:00"
+release_time_str = "13:00:00"
 """VARIABLES"""
 
 

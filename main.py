@@ -12,6 +12,7 @@ from spiders.page_content import PageContentSpider
 from spiders.news_spider import NewsSpider
 from modules.use_gemini import GeminiHandler
 
+#TODO: Add automatic removal of emails from non allowed users (instant and before creating mail to send)
 
 def run_crawler(link):
     process = CrawlerProcess(get_project_settings())

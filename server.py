@@ -2,14 +2,18 @@ import time
 from datetime import datetime, timedelta
 import json
 import logging
-from gmail_handler import GmailManager
+from modules.gmail_handler import GmailManager
 from main import create_email_procedurally
+
+
+#TODO: USE GOOGLE FORM FOR RESPONSES
+
 
 """VARIABLES"""
 sent_newsletter = False
 start_of_newsletter_str = "2025/03/01"
 days = ["Monday", "Friday"] # Monday and Friday
-release_time_str = "12:23:00"
+release_time_str = "12:00:00"
 """VARIABLES"""
 
 
@@ -66,7 +70,7 @@ def check_new_emails(gm):
             logger.info(f"Found {len(emails)} new emails.")
 
             try:
-                with open("files/whitelist.json", "r") as f:
+                with open("configs/whitelist.json", "r") as f:
                     whitelist = json.load(f)
             except (FileNotFoundError, json.JSONDecodeError) as e:
                 logger.error(f"Error loading whitelist: {e}")

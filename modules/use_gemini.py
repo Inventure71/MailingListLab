@@ -229,10 +229,11 @@ class GeminiHandler:
             response_schema=json_schema,
             response_mime_type="application/json",
             system_instruction=(
+                "- The general email should be accessible\n"
                 "- Only include images if provided in the prompt and the path is absolute\n"
                 "- If the location is not specified or is an online meeting say Online\n"
                 "- If contact is not included don't include it\n"
-                "- The description of the news should be a detailed description of the news\n"
+                "- The description of the news should be a detailed description of the news but written in easy terms\n"
                 "- The summary of the news should be a really quick bite-sized summary of the news\n"
                 "- Only include the link to the article or website of the news\n"
             ),

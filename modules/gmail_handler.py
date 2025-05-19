@@ -46,7 +46,7 @@ class GmailManager:
             if not self.creds:
                 print("No valid token found. Running OAuth flow...")
                 flow = InstalledAppFlow.from_client_secrets_file(credentials_file, SCOPES)
-                self.creds = flow.run_local_server(port=0)
+                self.creds = flow.run_console()
             with open(token_file, "w") as token:
                 token.write(self.creds.to_json())
         self.service = build("gmail", "v1", credentials=self.creds)

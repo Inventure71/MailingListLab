@@ -194,7 +194,7 @@ def create_email_procedurally(gmail_handler=None, gemini_handler=None, email_cre
 
             print("Crawler finished.")
 
-            with open("files/page.txt", "r") as f:
+            with open("files/page.txt", "w+") as f:
                 page_content = f.read()
                 print("Page Content:\n", page_content)
                 news_text += f"Article Content:\n{page_content}\n"
@@ -266,6 +266,7 @@ Here are the news articles data:
         f.write(email_html)
 
     if send_mail:
+        #gmail_handler.send_email_from_html_file("matteo.giorgetti.05@gmail.com", "Daily News Update", "files/output.html") #  "matteo.giorgetti.05@gmail.com"
         gmail_handler.send_email_from_html_file("newsletter@cyphy.life", "Daily News Update", "files/output.html") #  "matteo.giorgetti.05@gmail.com"
 
 

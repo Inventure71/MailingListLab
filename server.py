@@ -12,8 +12,8 @@ from main import create_email_procedurally
 """VARIABLES"""
 sent_newsletter = False
 start_of_newsletter_str = "2025/03/01"
-days = ["Monday", "Friday"] # Monday and Friday
-release_time_str = "13:00:00"
+days = ["Monday", "Friday", "Wednesday"] # Monday and Friday
+release_time_str = "17:47:00"
 """VARIABLES"""
 
 

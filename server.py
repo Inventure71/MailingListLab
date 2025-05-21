@@ -49,6 +49,7 @@ def handle_newsletter():
 
                 create_email_procedurally(
                     send_mail=True,
+                    
                 )
 
             # if datetime.now().strftime("%H:%M:%S") >= release_time:

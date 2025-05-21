@@ -1,6 +1,7 @@
 import json
 import multiprocessing
 import os
+from datetime import datetime, timedelta
 
 from scrapy.crawler import CrawlerProcess
 from scrapy.utils.project import get_project_settings
@@ -129,11 +130,13 @@ def create_email_procedurally(gmail_handler=None, gemini_handler=None, email_cre
     if not email_creator:
         email_creator = NewsEmailGenerator()
 
-    # year, month, day
-    start_date = "2025/02/11"
-    end_date = "2025/02/19"
+    # Use the last 7 days for start_date and end_date
+    end_date = datetime.now()
+    start_date = end_date - timedelta(days=7)
+    start_date_str = start_date.strftime("%Y/%m/%d")
+    end_date_str = end_date.strftime("%Y/%m/%d")
 
-    combined_text = gmail_handler.combine_unread_emails_text_in_period(start_date, end_date, unread_only=False, force_emails=force_emails)
+    combined_text = gmail_handler.combine_unread_emails_text_in_period(start_date_str, end_date_str, unread_only=False, force_emails=force_emails)
     print("Combined Email Text:\n", combined_text)
 
     if include_website_news:

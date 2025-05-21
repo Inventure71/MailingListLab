@@ -4,6 +4,7 @@ import json
 import logging
 from modules.gmail_handler import GmailManager
 from main import create_email_procedurally
+import threading
 
 
 #TODO: USE GOOGLE FORM FOR RESPONSES
@@ -115,20 +116,33 @@ def check_new_emails(gm):
         logger.error(f"Error checking emails: {e}")
 
 
-def main():
-    logger.info("Starting email monitor service")
+def email_checker_loop(gm):
+    while True:
+        try:
+            check_new_emails(gm)
+        except Exception as e:
+            logger.error(f"Error in email_checker_loop: {e}")
+        time.sleep(10)
 
+def newsletter_loop():
+    while True:
+        try:
+            handle_newsletter()
+        except Exception as e:
+            logger.error(f"Error in newsletter_loop: {e}")
+        time.sleep(10)
+
+
+def main():
+    logger.info("Starting email monitor service (threaded)")
     try:
         gm = GmailManager()
-
+        email_thread = threading.Thread(target=email_checker_loop, args=(gm,), daemon=True)
+        newsletter_thread = threading.Thread(target=newsletter_loop, daemon=True)
+        email_thread.start()
+        newsletter_thread.start()
         while True:
-            check_new_emails(gm)
-
-            handle_newsletter()
-
-            logger.debug("Sleeping for 10 seconds...")
-            time.sleep(10)
-
+            time.sleep(1)
     except KeyboardInterrupt:
         logger.info("Email monitor service stopped by user")
     except Exception as e:

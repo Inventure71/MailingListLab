@@ -10,6 +10,8 @@ from modules.email.compose_repost_email import RepostEmailGenerator
 from modules.email.compose_weekly_email import NewsEmailGenerator
 from modules.email.gmail_handler_v2 import GmailHelper
 
+# TODO: add automatic deletion of image folders
+
 """LOGGING"""
 logging.basicConfig(level=logging.INFO)
 
@@ -27,6 +29,9 @@ def check_directories():
     if not os.path.exists("configs"):
         logging.warning("Configs directory not found, creating default configs directory")
         raise Exception("Configs directory not found")
+    
+    if not os.path.exists("images"):
+        os.makedirs("images")
 
     if not os.path.exists("files"):
         os.makedirs("files")
@@ -68,12 +73,14 @@ gemini_handler = GeminiHandler()
 
 
 """REPOST"""
-def create_repost_email(msg_id, parsed_mail, send_mail=True):
+def create_repost_email(parsed_mail, send_mail=True):
     repost_email_generator = RepostEmailGenerator()
 
-    articles = analyze_repost(parsed_mail, intensive_mode=True, include_link_info=True, include_images=True)
+    articles = analyze_repost(parsed_mail, intensive_mode=True, include_link_info=True, include_images=True, gemini_handler=gemini_handler)
 
     mail_htlm = repost_email_generator.generate_email(articles)
+
+    gh.update_email_state(parsed_mail["id"], labels_to_add=["ANALYZED"])
 
     if send_mail:
         gh.send_email_html(newsletter_email, "Repost", mail_htlm)
@@ -115,9 +122,15 @@ def create_news_letter(send_mail=True):
 
     # TODO: remove any duplicate articles
 
-    articles = analyze_emails_newsletter(emails_to_analyze, intensive_mode=True, include_link_info=True, include_website_news=True, include_images=True)
+    articles = analyze_emails_newsletter(emails_to_analyze, intensive_mode=True, include_link_info=True, include_website_news=True, include_images=True, gemini_handler=gemini_handler)
 
     email_html = generator.generate_email(articles)
+
+    if send_mail:
+        gh.send_email_html(newsletter_email, "Newsletter", email_html)
+        logging.info("Sent newsletter to %s", newsletter_email)
+    else:
+        logging.info("Not sending newsletter to %s", newsletter_email)
 
 
 """CHECKING + TIME RELATED"""

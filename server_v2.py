@@ -10,12 +10,11 @@ from modules.AI.use_gemini_v2 import GeminiHandler
 from modules.email.compose_repost_email import RepostEmailGenerator
 from modules.email.compose_weekly_email import NewsEmailGenerator
 from modules.email.gmail_handler_v2 import GmailHelper
+from modules.utils.extract_email_address import extract_email_address
 
 # TODO: add automatic deletion of image folders
 
 """LOGGING"""
-logging.basicConfig(level=logging.INFO)
-
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(message)s",
@@ -136,17 +135,19 @@ def create_news_letter(send_mail=True):
 
 """CHECKING + TIME RELATED"""
 def check_mails():
-    global active, days, release_time_str, seconds_between_checks, whitelisted_senders, gh
+    global active, days, release_time_str, seconds_between_checks, whitelisted_senders, newsletter_email, newsletter_timer_thread, gh
     logging.info("Checking mails for reposts or changes to config")
 
     # get mails from today
     msgs = gh.list_emails(
         start_date=datetime.now().strftime("%Y/%m/%d"),
         end_date=datetime.now().strftime("%Y/%m/%d"),
-        read=True,
+        read=False,
         label="NOT_WHITELISTED",
         label_included=False,
     )
+
+    print("FOUND MAILS: ", len(msgs))
 
     for msg in msgs:
         logging.info("Found unprocessed mail: %s", msg)
@@ -154,8 +155,12 @@ def check_mails():
         mail = gh.parse_email(msg["id"])
         logging.info("Parsed mail: %s", mail)
         
-        if mail["sender"] in whitelisted_senders:
-            logging.info("Found whitelisted sender: %s", mail["sender"])
+        # Extract just the email address from the full sender string
+        sender_email = extract_email_address(mail["sender"])
+        logging.info("Extracted sender email: %s", sender_email)
+        
+        if sender_email in whitelisted_senders:
+            logging.info("Found whitelisted sender: %s", sender_email)
             if mail["title"].lower() == "config":
                 logging.info("Found config mail, updating config")
 
@@ -163,6 +168,7 @@ def check_mails():
                 logging.info("New modifications: %s", new_modifications)
                 logging.info("OLD config: %s", {"active": active, "days": days, "release_time_str": release_time_str, "seconds_between_checks": seconds_between_checks, "whitelisted_senders": whitelisted_senders, "newsletter_email": newsletter_email})
 
+                should_send_now = False
 
                 # parse the json and try to find modifications
                 for key, value in new_modifications.items():
@@ -179,8 +185,8 @@ def check_mails():
                     elif key == "newsletter_email":
                         newsletter_email = value
                     elif key == "send_now":
+                        should_send_now = value
                         logging.info("Sending newsletter now")
-                        create_news_letter()
                 
                 logging.info("NEW config: %s", {"active": active, "days": days, "release_time_str": release_time_str, "seconds_between_checks": seconds_between_checks, "whitelisted_senders": whitelisted_senders, "newsletter_email": newsletter_email})
 
@@ -191,8 +197,14 @@ def check_mails():
                 # archive the mail
                 gh.archive_email(msg["id"])
 
+                if should_send_now:
+                    if newsletter_timer_thread:
+                        newsletter_timer_thread.cancel()
+                    create_news_letter(send_mail=True)
+                    find_and_start_newsletter_timer()
+
                 # stop the newsletter thread
-                if newsletter_timer_thread:
+                elif newsletter_timer_thread:
                     newsletter_timer_thread.cancel()
                     find_and_start_newsletter_timer()
             
@@ -201,6 +213,12 @@ def check_mails():
                 create_repost_email(mail)
                 gh.archive_email(msg["id"])
                 logging.info("Archived mail")
+        
+        else:
+            logging.info("Found non-whitelisted mail, with sender: %s (email: %s), skipping", mail["sender"], sender_email)
+            # add the label "NOT_WHITELISTED" to the mail
+            gh.update_email_state(msg["id"], labels_to_add=["NOT_WHITELISTED"])
+
 
 def find_and_start_newsletter_timer():
     global newsletter_timer_thread, release_time_str, days, active

@@ -1,205 +1,298 @@
+import os
+import re
 import json
 import time
+from time import sleep
+from datetime import datetime
 from collections import deque
 from enum import Enum
+from typing import List, Tuple, Optional
 
 from google import genai
 from google.genai import types
+from google.genai.errors import ServerError, ClientError
+
 
 class GeminiHandler:
-    def __init__(self):
-        self.key = json.load(open("credentials/key.json"))["key"]
-        self.config = None
-        self.model_name = "gemini-2.0-flash-exp" # "gemini-2.0-flash"
-        self.client = genai.Client(api_key=self.key)
+    """Unified handler that merges the capabilities of two earlier prototypes.
 
-        with open("configs/mail_configs.json", 'r') as file:
-            category_colors = json.load(file)["category_colors"]
+    Key features retained from **version 1**:
+    - Category‑aware news parsing (`retrieve_news_gemini`, `divide_news_gemini`).
+    - Prompt chunking with a flexible token/length guard (`divide_into_blocks`).
+    - Fine‑grained deque‑based rate‑limiting.
 
-        self.NewsCategory = Enum('NewsCategory', {category.upper(): category for category in category_colors.keys()})
+    Enhancements adopted from **version 2**:
+    - Robust API‑key discovery (env var → .env → credentials file).
+    - Higher default throughput (configurable `rate_limit` and `time_window`).
+    - Exponential‑back‑off retry logic for 429/503 errors.
+    - Chat‑style history management (`generate`).
+    """
 
-        self.requests_timestamps = deque(maxlen=10)  # store timestamps of last 10 requests
-        self.rate_limit = 10  # requests number
-        self.time_window = 60  # seconds before refresh of requests (1 minute)
+    # ---------------------------------------------------------------------
+    # ▶ INITIALISATION -----------------------------------------------------
+    # ---------------------------------------------------------------------
 
-    def check_rate_limit(self):
-        """Check if we can make a new request based on rate limits."""
-        current_time = time.time()
+    def __init__(
+        self,
+        *,
+        model: str = "gemini-2.0-flash-exp",
+        rate_limit: int = 30,
+        time_window: int = 60,
+        max_retries: int = 5,
+        initial_retry_delay: int = 5,
+        max_retry_delay: int = 60,
+    ) -> None:
+        # API key discovery -------------------------------------------------
+        self._api_key: str = self._discover_api_key()
+        self.client = genai.Client(api_key=self._api_key)
 
-        # remove timestamps older than time window
-        while self.requests_timestamps and current_time - self.requests_timestamps[0] >= self.time_window:
-            self.requests_timestamps.popleft()
+        # Model / config ----------------------------------------------------
+        self.model = model
+        self.config: Optional[types.GenerateContentConfig] = None
 
-        # if less than rate_limit requests in timestamps proceed
-        if len(self.requests_timestamps) < self.rate_limit:
-            self.requests_timestamps.append(current_time)
-            return True
+        # Category setup ----------------------------------------------------
+        with open("configs/mail_configs.json", "r", encoding="utf‑8") as f:
+            category_colors = json.load(f)["category_colors"]
+        self.NewsCategory = Enum(
+            "NewsCategory", {name.upper(): name for name in category_colors.keys()}
+        )
 
-        # calculate wait time if it is at the limit
-        if self.requests_timestamps:
-            wait_time = self.time_window - (current_time - self.requests_timestamps[0])
-            if wait_time > 0:
-                time.sleep(wait_time)
-                self.requests_timestamps.append(current_time + wait_time)
-                return True
+        # Rate limiting -----------------------------------------------------
+        self.requests_timestamps: deque[float] = deque(maxlen=rate_limit)
+        self.rate_limit = rate_limit
+        self.time_window = time_window
 
-        return False
+        # Retry parameters --------------------------------------------------
+        self.max_retries = max_retries
+        self.initial_retry_delay = initial_retry_delay
+        self.max_retry_delay = max_retry_delay
 
-    def generic_ask_gemini(self, prompt):
-        if not self.check_rate_limit():
-            print("Rate limit exceeded. Please wait before making more requests.")
-            time.sleep(5)
-            return self.generic_ask_gemini(prompt)
-
-        blocks = self.divide_into_blocks(prompt)
-        responses = []
-        for block in blocks:
-            if self.config is None:
-                response = self.client.models.generate_content(
-                    model=self.model_name,
-                    contents=prompt,
-                )
-            else:
-                response = self.client.models.generate_content(
-                    model=self.model_name,
-                    contents=prompt,
-                    config=self.config,
-                )
-            print(response.text)
-            responses.append(response.text)
-
-        return responses
+    # ------------------------------------------------------------------
+    # ▶ PRIVATE HELPERS ------------------------------------------------
+    # ------------------------------------------------------------------
 
     @staticmethod
-    def divide_into_blocks(prompt):
-        """
-        # Use the existing client instance instead of creating a new one
-        response = self.client.models.count_tokens(
-            model=self.model_name,
-            contents=prompt,
-        )
-        print("Token count response:", response)
-        total_tokens = response.total_tokens
-        print("Total tokens:", total_tokens)
+    def _discover_api_key() -> str:
+        """Locate a Gemini API key via env‑var, .env file or JSON creds."""
+        if (key := os.environ.get("GEMINI_API_KEY")):
+            return key
 
-        # If token count is under a threshold, return the whole prompt as one block.
-        if total_tokens <= 500000:
-            return [prompt]
-        else:
-            blocks = []
-            start = 0
-            block_size = 450000  # Adjust as needed to stay under the limit.
-            while start < len(prompt):
-                end = start + block_size
-                blocks.append(prompt[start:end])
-                start = end
-            print("Number of blocks:", len(blocks))
-            return blocks"""
+        # .env fallback --------------------------------------------------
+        try:
+            with open(".env", "r", encoding="utf‑8") as f:
+                for line in f:
+                    if line.strip().startswith("GEMINI_API_KEY"):
+                        return line.split("=", 1)[1].strip()
+        except FileNotFoundError:
+            pass
 
-        max_block_size = 2000000
+        # credentials/key.json fallback ----------------------------------
+        try:
+            with open("credentials/key.json", "r", encoding="utf‑8") as f:
+                return json.load(f)["key"]
+        except FileNotFoundError:
+            raise RuntimeError(
+                "Gemini API key not found – set GEMINI_API_KEY or supply .env/credentials/key.json"
+            )
 
-        # if text is small enough, return as single block
-        if len(prompt) <= max_block_size:
-            return [prompt]
+    # ------------------------------------------------------------------
+    # ▶ RATE‑LIMITING ---------------------------------------------------
+    # ------------------------------------------------------------------
 
-        # split into blocks
-        blocks = []
+    def _check_rate_limit(self) -> None:
+        """Block until a new request is allowed under the moving window."""
+        now = time.time()
+
+        # Drop timestamps older than the window -------------------------
+        while self.requests_timestamps and now - self.requests_timestamps[0] >= self.time_window:
+            self.requests_timestamps.popleft()
+
+        # If window full, wait until head expires ----------------------
+        if len(self.requests_timestamps) >= self.rate_limit:
+            wait_for = self.time_window - (now - self.requests_timestamps[0])
+            if wait_for > 0:
+                print(f"⏳  Rate‑limit hit – sleeping {wait_for:.1f}s …")
+                sleep(wait_for)
+            # Clean up after wait
+            while self.requests_timestamps and time.time() - self.requests_timestamps[0] >= self.time_window:
+                self.requests_timestamps.popleft()
+
+        # Record this request ------------------------------------------
+        self.requests_timestamps.append(time.time())
+
+    # ------------------------------------------------------------------
+    # ▶ LOW‑LEVEL REQUEST WRAPPER --------------------------------------
+    # ------------------------------------------------------------------
+
+    def _generate(self, *, contents: List[types.Content], config: types.GenerateContentConfig) -> types.GenerateContentResponse:
+        """Unified calling layer: rate‑limit + retries + error handling."""
+        delay = self.initial_retry_delay
+        for attempt in range(self.max_retries + 1):
+            self._check_rate_limit()
+            try:
+                return self.client.models.generate_content(
+                    model=self.model,
+                    contents=contents,
+                    config=config,
+                )
+            except (ServerError, ClientError) as e:
+                msg = str(e)
+                overloaded = "503" in msg and "overloaded" in msg.lower()
+                quota = "429" in msg and "quota" in msg.lower()
+                if not (overloaded or quota) or attempt == self.max_retries:
+                    # Non‑retryable or exhausted attempts
+                    raise
+
+                # Back‑off ------------------------------------------------
+                suggested = None
+                if quota and (m := re.search(r"retryDelay\": \"(\d+)s\"", msg)):
+                    suggested = int(m.group(1))
+                wait = suggested or delay
+                print(
+                    f"⚠️  {'Overloaded' if overloaded else 'Quota'} – retry {attempt + 1}/{self.max_retries} in {wait}s …"
+                )
+                sleep(wait)
+                if not suggested:
+                    delay = min(delay * 1.5, self.max_retry_delay)
+        # Should never be reached
+        raise RuntimeError("Unexpected fall‑through in retry loop")
+
+    # ------------------------------------------------------------------
+    # ▶ PUBLIC UTILITIES -----------------------------------------------
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def divide_into_blocks(text: str, max_block_size: int = 2_000_000) -> List[str]:
+        """Return a list of <= `max_block_size` chunks, splitting at sentence ends when possible."""
+        if len(text) <= max_block_size:
+            return [text]
+        blocks: List[str] = []
         start = 0
-        while start < len(prompt):
-            # Find the last period before max_block_size to maintain sentence integrity
-            end = min(start + max_block_size, len(prompt))
-            if end < len(prompt):
-                # Look for the last period before the max_block_size
-                last_period = prompt[start:end].rfind('.')
-                if last_period != -1:
-                    end = start + last_period + 1
-
-            blocks.append(prompt[start:end])
+        while start < len(text):
+            end = min(start + max_block_size, len(text))
+            if end < len(text):
+                # Prefer split on last period
+                last_dot = text[start:end].rfind(".")
+                if last_dot != -1:
+                    end = start + last_dot + 1
+            blocks.append(text[start:end])
             start = end
-
-        print("Number of blocks:", len(blocks))
         return blocks
 
-    def retrieve_news_gemini(self, prompt):
-        json_schema = types.Schema(
-            type="OBJECT",
-            enum=[],
-            required=["news"],
-            properties={
-                "news": types.Schema(
-                    type="ARRAY",
-                    items=types.Schema(
-                        type="OBJECT",
-                        enum=[],
-                        required=["source", "brief description", "relevancy", "location"],
-                        properties={
-                            "source": types.Schema(type="STRING"),
-                            "brief description": types.Schema(type="STRING"),
-                            "requirements": types.Schema(type="STRING"),
-                            "imageVideosLinks": types.Schema(type="STRING"),
-                            "linkToAricle": types.Schema(type="STRING"),
-                            "linkToMeeting": types.Schema(type="STRING"),
-                            "relevancy": types.Schema(type="INTEGER"),
-                            "location": types.Schema(type="STRING"),
-                            "contact": types.Schema(type="STRING"),
-                        },
-                    ),
-                ),
-            },
-        )
+    # ------------------------------------------------------------------
+    # ▶ GENERIC ASK (non‑chat) -----------------------------------------
+    # ------------------------------------------------------------------
+    def generic_ask_gemini(self, prompt: str, *, temperature: float = 1.0) -> List[str]:
+        """Ask Gemini, chunking long prompts and returning each block's response."""
+        blocks = self.divide_into_blocks(prompt)
+        out: List[str] = []
+        for block in blocks:
+            cfg = types.GenerateContentConfig(
+                temperature=temperature,
+                response_mime_type="text/plain",
+            )
+            content_obj = [types.Content(role="user", parts=[types.Part.from_text(text=block)])]
+            response = self._generate(contents=content_obj, config=cfg)
+            out.append(response.text)
+        return out
 
-        # define the generation configuration
-        generation_config = types.GenerateContentConfig(
-            temperature=1,
+    # ------------------------------------------------------------------
+    # ▶ CHAT‑STYLE GENERATE --------------------------------------------
+    # ------------------------------------------------------------------
+    def convert_to_gemini(self, history: List[Tuple[str, str]]) -> List[types.Content]:
+        contents: List[types.Content] = []
+        for role, text in history:
+            contents.append(
+                types.Content(role="user" if role == "user" else "model", parts=[types.Part.from_text(text=text)])
+            )
+        return contents
+
+    def generate(
+        self,
+        prompt: str,
+        history: List[Tuple[str, str]],
+        *,
+        system_instruction: str = "",
+    ) -> Tuple[str, List[Tuple[str, str]]]:
+        """Chat‑style generation with history and system instruction support."""
+        contents = self.convert_to_gemini(history)
+        contents.append(types.Content(role="user", parts=[types.Part.from_text(text=prompt)]))
+
+        cfg = types.GenerateContentConfig(
+            response_mime_type="text/plain",
+            system_instruction=[types.Part.from_text(text=system_instruction)] if system_instruction else None,
+        )
+        response = self._generate(contents=contents, config=cfg)
+        history.extend([("user", prompt), ("model", response.text)])
+        return response.text, history
+
+    # ------------------------------------------------------------------
+    # ▶ NEWS‑SPECIFIC ENDPOINTS ----------------------------------------
+    # ------------------------------------------------------------------
+
+    def _news_call(self, prompt: str, *, schema: types.Schema, system_instruction: str) -> str:
+        cfg = types.GenerateContentConfig(
+            temperature=1.0,
             top_p=0.95,
             top_k=40,
             max_output_tokens=8192,
-            response_schema=json_schema,
+            response_schema=schema,
             response_mime_type="application/json",
-            system_instruction=(
-                "Your objective is to divide and filter all the different news in the given text. "
-                "You should only include the news that follow the following mindset:\n"
-                "Cyber-Physical Systems\nDigital-Physical Integration\nRobotics\nHuman-Computer Interaction\n"
-                "Artificial Intelligence\nAutomation\nDecentralized Technologies\nEthics in Technology\n"
-                "Interdisciplinary Research\nInnovation and Design\n\n"
-                "- Today is the 19/02/2025, so include only events that have not happened yet. "
-                "- For the news, the exact date is not important.\n"
-                "- The main targets for the news are undergraduate and graduate students."
-                "- Include the link to the article if available.\n"
-                "- Job opportunities should not be included in the news.\n"
-                "- The relevancy of the news should be a number between 0 and 100.\n"
-                "- The relevancy of the news should also be based on their uniqueness, if two or more similar news are found lower the score for the subsequent news.\n"
-                "- In the imageVideoLinks include all the links of images and videos that are related to the news.\n"
-            ),
+            system_instruction=system_instruction,
         )
-
-        # content object using the provided prompt
-        content_obj = types.Content(
-            role="user",
-            parts=[types.Part(text=prompt)]
-        )
-
-        # generate the content using the specified model and configuration
-        response = self.client.models.generate_content(
-            model=self.model_name,
-            contents=content_obj,
-            config=generation_config,
-        )
-
-        print("Response:", response.text)
+        content_obj = [types.Content(role="user", parts=[types.Part.from_text(text=prompt)])]
+        response = self._generate(contents=content_obj, config=cfg)
         return response.text
 
-    def divide_news_gemini(self, prompt):
+    def evaluate_articles_gemini(self, prompt: str) -> str:
+        """Filter raw text into future‑relevant tech news items (JSON)."""
+
         json_schema = types.Schema(
             type="OBJECT",
-            enum=[],
             required=["news"],
             properties={
                 "news": types.Schema(
                     type="ARRAY",
                     items=types.Schema(
                         type="OBJECT",
-                        enum=[],
+                        required=["source", "brief description", "relevancy", "location"],
+                        properties={
+                            "ID": types.Schema(type="STRING"),
+                            "source": types.Schema(type="STRING"),
+                            "brief description": types.Schema(type="STRING"),
+                            "reasoning": types.Schema(type="STRING"),
+                            "relevancy": types.Schema(type="INTEGER"),
+                        },
+                    ),
+                )
+            },
+        ) 
+
+        today_date = datetime.now().strftime("%Y/%m/%d") 
+        
+        system_instruction = (
+            "You are in charge of creating a newsletter for a university."
+            "You are a helpful assistant that evaluates the quality of the articles and the level of relvancy to the user. "
+            "You are given a list of articles and their related sources content. "
+            "Your task is to evaluate the relevancy of the articles for the user."
+            "Only include news that match these themes: Cyber\n‑Physical Systems\n-Digital\n‑Physical Integration\nRobotics\nHuman\n‑Computer Interaction\nArtificial Intelligence\nAutomation\nDecentralized Technologies\nEthics in Technology\nInterdisciplinary Research\nInnovation and Design.\n\n"
+            f"‑Today is {today_date} – include only events that have not happened yet.\n"
+            "‑Target audience: undergraduate & graduate students.\n"
+            #"‑ Job opportunities ➜ exclude.\n"
+            "‑Score relevancy 0‑100; if similar news appear drastically decrease the scores of the copies.\n"
+        )
+        return self._news_call(prompt, schema=json_schema, system_instruction=system_instruction)
+
+    def divide_news_gemini(self, prompt: str) -> str:
+        """Transform news JSON into categorised/colour‑coded digest."""
+        json_schema = types.Schema(
+            type="OBJECT",
+            required=["news"],
+            properties={
+                "news": types.Schema(
+                    type="ARRAY",
+                    items=types.Schema(
+                        type="OBJECT",
                         required=["title", "source", "location", "description", "summary", "category", "link"],
                         properties={
                             "title": types.Schema(type="STRING"),
@@ -210,47 +303,46 @@ class GeminiHandler:
                             "summary": types.Schema(type="STRING"),
                             "category": types.Schema(
                                 type="STRING",
-                                enum=[category.value for category in self.NewsCategory]
+                                enum=[cat.value for cat in self.NewsCategory],
                             ),
                             "link": types.Schema(type="STRING"),
-                            "image": types.Schema(type="STRING"),
                         },
                     ),
-                ),
+                )
             },
         )
-
-        # define the generation configuration
-        generation_config = types.GenerateContentConfig(
-            temperature=1,
-            top_p=0.95,
-            top_k=40,
-            max_output_tokens=8192,
-            response_schema=json_schema,
-            response_mime_type="application/json",
-            system_instruction=(
-                "- The general email should be accessible\n"
-                "- Only include images if provided in the prompt and the path is absolute\n"
-                "- If the location is not specified or is an online meeting say Online\n"
-                "- If contact is not included don't include it\n"
-                "- The description of the news should be a detailed description of the news but written in easy terms\n"
-                "- The summary of the news should be a really quick bite-sized summary of the news\n"
-                "- Only include the link to the article or website of the news\n"
-            ),
+        system_instruction = (
+            """
+            You are in charge of creating a newsletter for a university.
+            You are given a list of articles and all the related information for each.
+            You write using simple terms but still in a professional way.
+            Your task is to process each article and identify the components:
+            - Title: A simple coincise title that you would give to the article.
+            - Source: The source of the article.
+            - Location: The location of the article. 
+            -- Use 'Online' for unspecified locations
+            - Contact: The contact of the article.
+            -- If not provided don't include in response
+            - Description: A medium-detailed description of the article.
+            - Summary: Bite‑sized headline that makes you understand the general idea and vibes of the article.
+            - Category: The category of the article.
+            - Link: most relevant link to the article, the one that once clicked enables the users to read the article.
+            -- Include only a single authoritative link per item.
+            """
         )
+        return self._news_call(prompt, schema=json_schema, system_instruction=system_instruction)
 
-        # create the content object using the provided prompt
-        content_obj = types.Content(
-            role="user",
-            parts=[types.Part(text=prompt)]
-        )
 
-        # generate the content using the specified model and configuration.
-        response = self.client.models.generate_content(
-            model=self.model_name,
-            contents=content_obj,
-            config=generation_config,
-        )
-
-        print("Response:", response.text)
-        return response.text
+# ---------------------------------------------------------------------
+# ▶ STAND‑ALONE TEST ---------------------------------------------------
+# ---------------------------------------------------------------------
+if __name__ == "__main__":
+    gh = GeminiHandler()
+    hist: List[Tuple[str, str]] = []
+    while True:
+        try:
+            user_prompt = input("› ")
+        except (EOFError, KeyboardInterrupt):
+            break
+        reply, hist = gh.generate(user_prompt, hist)
+        print(reply)

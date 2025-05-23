@@ -3,6 +3,7 @@ import json
 import os
 import threading
 import logging
+import time
 
 from modules.AI.flows import analyze_repost, analyze_emails_newsletter
 from modules.AI.use_gemini_v2 import GeminiHandler
@@ -97,9 +98,9 @@ def create_news_letter(send_mail=True):
     
     emails_to_analyze = [] # list of emails to analyze
 
-    # TODO: get all unread emails from today to last sent newsletter (maximum 7 days)
-    start_date = datetime.now().strftime("%Y/%m/%d")
-    end_date = (datetime.now() - timedelta(days=7)).strftime("%Y/%m/%d")
+    # Get all unread emails from 7 days ago to today
+    start_date = (datetime.now() - timedelta(days=7)).strftime("%Y/%m/%d")
+    end_date = datetime.now().strftime("%Y/%m/%d")
 
     msgs = gh.list_emails(
         start_date=start_date,
@@ -134,11 +135,6 @@ def create_news_letter(send_mail=True):
 
 
 """CHECKING + TIME RELATED"""
-def check_reposts():
-    logging.info("Checking reposts")
-
-    threading.Timer(seconds_between_checks, check_reposts).start()
-    
 def check_mails():
     global active, days, release_time_str, seconds_between_checks, whitelisted_senders, gh
     logging.info("Checking mails for reposts or changes to config")
@@ -202,8 +198,7 @@ def check_mails():
             
             else:
                 logging.info("Found non-config mail, with title: %s, checking for reposts", mail["title"])
-                #print("IMPLEMENT REPOST MAIL")
-                create_repost_email(msg["id"], mail)
+                create_repost_email(mail)
                 gh.archive_email(msg["id"])
                 logging.info("Archived mail")
 
@@ -255,5 +250,25 @@ def find_and_start_newsletter_timer():
 
 
 find_and_start_newsletter_timer()
-check_reposts()
+
+# Start the email checking loop
+def check_mails_loop():
+    while True:
+        try:
+            check_mails()
+        except Exception as e:
+            logging.error(f"Error in check_mails_loop: {e}")
+        time.sleep(seconds_between_checks)
+
+# Start email checking thread
+threading.Thread(target=check_mails_loop, daemon=True).start()
+logging.info("Started email checking thread")
+
+# Keep the main thread alive
+try:
+    while True:
+        time.sleep(1)
+except KeyboardInterrupt:
+    logging.info("Server stopped by user")
+
 """CHECKING"""

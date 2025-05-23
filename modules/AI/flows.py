@@ -12,6 +12,7 @@ from bs4 import BeautifulSoup
 from modules.utils.sanitization import sanitize_string
 from selenium import webdriver
 from selenium.webdriver.firefox.options import Options
+import json
 
 
 """MOVE THIS"""
@@ -89,12 +90,19 @@ def analyze_repost(parsed_mail, intensive_mode=False, include_link_info=False, i
         else:
             logging.warning("Failed to scrape website: %s", link)
 
-    # concatenate parsed mail Title, content and links to a single string with good formatting
-    mail_content = parsed_mail["title"] + "\n\n" + parsed_mail["content"] + "\n\n" + "\n\n".join(link_articles.values())
+    # concatenate parsed mail Title, text and links to a single string with good formatting
+    mail_content = parsed_mail["title"] + "\n\n" + parsed_mail["text"] + "\n\n" + "\n\n".join(link_articles.values())
 
-    articles = gemini_handler.generate_repost(mail_content)
+    evaluation_response = gemini_handler.evaluate_articles_gemini(mail_content)
+    
+    # Parse JSON response
+    try:
+        evaluation_data = json.loads(evaluation_response)
+        articles = evaluation_data.get("news", [])
+    except json.JSONDecodeError as e:
+        logging.error(f"Failed to parse Gemini evaluation response: {e}")
+        return []
 
-    # TODO: add a step that checks for each article what images would be good  
     return articles
 
 
@@ -106,35 +114,111 @@ def analyze_emails_newsletter(emails, intensive_mode=False, include_link_info=Fa
     shutil.rmtree("images/" + folder_extra_name, ignore_errors=True)
     os.makedirs("images/" + folder_extra_name)
 
-    combined_content = ""  # formatted such that each mail is clearly separated by ID or subject
+    # FIRST PASS: scrape all links WITHOUT images and build comprehensive content
+    combined_content = ""
+    email_link_mapping = {}  # Maps article IDs to (email_idx, link_idx) for re-scraping
+    article_id_counter = 0
 
-    for idx, email in enumerate(emails):
-        email_header = f"\n{'='*40}\nEMAIL {idx+1}"
+    for email_idx, email in enumerate(emails):
+        email_header = f"\n{'='*40}\nEMAIL {email_idx+1}"
         if "id" in email:
             email_header += f" (ID: {email['id']})"
         if "subject" in email:
             email_header += f" - Subject: {email['subject']}"
         email_header += f"\n{'='*40}\n"
         combined_content += email_header
+        
+        # Add email content
         if "content" in email:
             combined_content += f"Content:\n{email['content']}\n"
-        if "body" in email and not email.get("content"):
+        elif "body" in email:
             combined_content += f"Body:\n{email['body']}\n"
-        if "text" in email and not (email.get("content") or email.get("body")):
+        elif "text" in email:
             combined_content += f"Text:\n{email['text']}\n"
 
-        # Process links
+        # Process links without images first
         links = email.get("links", [])
-        for lidx, link in enumerate(links):
+        for link_idx, link in enumerate(links):
+            article_id = f"ARTICLE_{article_id_counter}"
+            email_link_mapping[article_id] = (email_idx, link_idx, link)
+            article_id_counter += 1
+            
             scraper = Scraper()
-            html = scraper.scrape_website(link, download_images=include_images, folder_extra_name=folder_extra_name)
-            link_header = f"\n--- Link {lidx+1}: {link} ---\n"
+            html = scraper.scrape_website(link, download_images=False, folder_extra_name=folder_extra_name)
+            link_header = f"\n--- {article_id} - Link {link_idx+1}: {link} ---\n"
             if html is not None:
                 combined_content += link_header + html + "\n"
             else:
                 combined_content += link_header + "[Failed to scrape this link]\n"
 
-    return combined_content
+    # Send to Gemini for evaluation
+    evaluation_response = gemini_handler.evaluate_articles_gemini(combined_content)
+    
+    # Parse JSON response
+    try:
+        evaluation_data = json.loads(evaluation_response)
+        all_articles = evaluation_data.get("news", [])
+    except json.JSONDecodeError as e:
+        logging.error(f"Failed to parse Gemini evaluation response: {e}")
+        return []
+
+    # Sort by relevancy and get top 5
+    all_articles = sorted(all_articles, key=lambda x: x.get("relevancy", 0), reverse=True)
+    top_5_articles = all_articles[:5]
+
+    # SECOND PASS: re-scrape links for top 5 articles WITH images
+    top_5_combined_content = ""
+    
+    for article in top_5_articles:
+        article_id = article.get("ID", "")
+        if article_id in email_link_mapping:
+            email_idx, link_idx, link = email_link_mapping[article_id]
+            email = emails[email_idx]
+            
+            # Add email header and content for this article
+            email_header = f"\n{'='*40}\n{article_id} - EMAIL {email_idx+1}"
+            if "id" in email:
+                email_header += f" (ID: {email['id']})"
+            if "subject" in email:
+                email_header += f" - Subject: {email['subject']}"
+            email_header += f"\n{'='*40}\n"
+            top_5_combined_content += email_header
+            
+            # Add email content
+            if "content" in email:
+                top_5_combined_content += f"Content:\n{email['content']}\n"
+            elif "body" in email:
+                top_5_combined_content += f"Body:\n{email['body']}\n"
+            elif "text" in email:
+                top_5_combined_content += f"Text:\n{email['text']}\n"
+
+            # Add Gemini's evaluation info
+            top_5_combined_content += f"Source: {article.get('source', '')}\n"
+            top_5_combined_content += f"Brief Description: {article.get('brief description', '')}\n"
+            top_5_combined_content += f"Reasoning: {article.get('reasoning', '')}\n"
+            top_5_combined_content += f"Relevancy: {article.get('relevancy', 0)}\n"
+            
+            # Re-scrape the link WITH images
+            scraper = Scraper()
+            html = scraper.scrape_website(link, download_images=True, folder_extra_name=folder_extra_name)
+            link_header = f"\n--- {article_id} - Link: {link} ---\n"
+            if html is not None:
+                top_5_combined_content += link_header + html + "\n"
+            else:
+                top_5_combined_content += link_header + "[Failed to scrape this link]\n"
+
+    # Send comprehensive info about top 5 to divide_news_gemini
+    articles_response = gemini_handler.divide_news_gemini(top_5_combined_content)
+    
+    # Parse final response
+    try:
+        articles_data = json.loads(articles_response)
+        final_articles = articles_data.get("news", [])
+    except json.JSONDecodeError as e:
+        logging.error(f"Failed to parse Gemini articles response: {e}")
+        return []
+
+    return final_articles
 
 if __name__ == "__main__":
     scraper = Scraper()

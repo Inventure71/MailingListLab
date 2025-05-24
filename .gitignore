@@ -16,3 +16,4 @@ testing.py
 server.log
 email_monitor.log
 images/
+nohup.out

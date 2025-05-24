@@ -11,7 +11,8 @@ from urllib.parse import urljoin, urlparse
 from bs4 import BeautifulSoup
 from modules.utils.sanitization import sanitize_string
 from selenium import webdriver
-from selenium.webdriver.firefox.options import Options
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.service import Service
 import json
 
 
@@ -19,14 +20,43 @@ import json
 class Scraper:
     def __init__(self):
         self.options = Options()
-        self.options.add_argument("--headless")
+        self.options.add_argument("--headless=new")
         self.options.add_argument("--no-sandbox")
         self.options.add_argument("--disable-dev-shm-usage")
+        self.options.add_argument("--disable-gpu")
+        self.options.add_argument("--disable-web-security")
+        self.options.add_argument("--allow-running-insecure-content")
+        self.options.add_argument("--disable-extensions")
+        self.options.add_argument("--disable-background-timer-throttling")
+        self.options.add_argument("--disable-backgrounding-occluded-windows")
+        self.options.add_argument("--disable-renderer-backgrounding")
+        self.options.add_argument("--remote-debugging-port=9222")
+        self.options.add_argument("--window-size=1920,1080")
         self.driver = None
 
     def init_driver(self, url="https://example.com"):
         if self.driver is None:
-            self.driver = webdriver.Firefox(options=self.options)
+            try:
+                # Try to use Chrome/Chromium
+                self.driver = webdriver.Chrome(options=self.options)
+            except Exception as chrome_error:
+                logging.warning(f"Chrome WebDriver failed: {chrome_error}")
+                # Fallback to Firefox if Chrome fails
+                try:
+                    from selenium.webdriver.firefox.options import Options as FirefoxOptions
+                    firefox_options = FirefoxOptions()
+                    firefox_options.add_argument("--headless")
+                    firefox_options.add_argument("--no-sandbox")
+                    firefox_options.add_argument("--disable-dev-shm-usage")
+                    
+                    # Try to specify the actual Firefox binary location for snap installation
+                    firefox_options.binary_location = "/snap/firefox/current/usr/lib/firefox/firefox"
+                    
+                    self.driver = webdriver.Firefox(options=firefox_options)
+                except Exception as firefox_error:
+                    logging.error(f"Both Chrome and Firefox WebDriver failed. Chrome: {chrome_error}, Firefox: {firefox_error}")
+                    raise Exception("No working WebDriver found")
+        
         self.driver.get(url)
         return self.driver
 
@@ -51,11 +81,54 @@ class Scraper:
         return soup
 
     def scrape_website(self, url: str, download_images=True, folder_extra_name: str = "") -> str:
-        driver = self.init_driver(url)
-        html = driver.page_source
-        driver.quit()
+        driver = None
+        try:
+            driver = self.init_driver(url)
+            html = driver.page_source
+            
+            soup = BeautifulSoup(html, "html.parser")
 
-        soup = BeautifulSoup(html, "html.parser")
+            # Remove scripts/styles, then filter links
+            for tag in soup(["script", "style", "noscript", "iframe"]):
+                tag.extract()
+            soup = self._filter_problematic_links(soup)
+
+            # Download images if desired (this doesn't affect the text extraction)
+            if download_images:
+                self._download_images_from_soup(soup, base_url=url, folder_extra_name=folder_extra_name)
+
+            # Extract *only* visible text, normalize whitespace:
+            text = soup.get_text(separator="\n", strip=True)
+            # Collapse multiple blank lines:
+            cleaned = re.sub(r'\n\s*\n+', '\n\n', text)
+            return cleaned
+            
+        except Exception as e:
+            logging.error(f"WebDriver failed for {url}: {e}")
+            # Fallback to requests if WebDriver fails
+            try:
+                logging.info(f"Attempting fallback requests scraping for {url}")
+                return self._scrape_with_requests(url, download_images, folder_extra_name)
+            except Exception as fallback_error:
+                logging.error(f"Fallback requests scraping also failed for {url}: {fallback_error}")
+                return None
+        finally:
+            if driver:
+                try:
+                    driver.quit()
+                except Exception as e:
+                    logging.warning(f"Failed to quit driver: {e}")
+
+    def _scrape_with_requests(self, url: str, download_images=True, folder_extra_name: str = "") -> str:
+        """Fallback scraping method using requests instead of Selenium"""
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        }
+        
+        response = requests.get(url, headers=headers, timeout=10)
+        response.raise_for_status()
+        
+        soup = BeautifulSoup(response.content, "html.parser")
 
         # Remove scripts/styles, then filter links
         for tag in soup(["script", "style", "noscript", "iframe"]):

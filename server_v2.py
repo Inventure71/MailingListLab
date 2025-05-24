@@ -79,6 +79,9 @@ active, days, release_time_str, seconds_between_checks, whitelisted_senders, new
 gh = GmailHelper()
 gemini_handler = GeminiHandler()
 
+# log the current time
+logging.info("Current time: %s", datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+
 
 """REPOST"""
 def create_repost_email(parsed_mail, send_mail=True):

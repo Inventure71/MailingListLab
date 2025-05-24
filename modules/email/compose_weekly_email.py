@@ -83,6 +83,13 @@ class NewsEmailGenerator:
             <td style="text-align: center; background-color: #f4f4f4; color: #777777; 
                        padding: 12px; font-size: 12px;">
                 {self.footer_text}
+                <br><br>
+                <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid #cccccc;">
+                    <em>This email is automatically generated.</em>
+                    <br>
+                    Your feedback is really important to improve the project, please help us improve by completing our 
+                    <a href="https://forms.gle/UegbAWJ6zEcv7yKT8" style="color: #0066cc; text-decoration: none;">feedback form</a>.
+                </div>
             </td>
         </tr>'''
 

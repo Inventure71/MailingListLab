@@ -12,7 +12,9 @@ from modules.email.compose_weekly_email import NewsEmailGenerator
 from modules.email.gmail_handler_v2 import GmailHelper
 from modules.utils.extract_email_address import extract_email_address
 
-# TODO: add automatic deletion of image folders
+
+# pip install -r requirements.txt
+# TODO: add google form at the end of emails to collect feedback
 
 """LOGGING"""
 logging.basicConfig(
@@ -201,11 +203,21 @@ def create_news_letter_threaded(send_mail=True):
     thread = threading.Thread(target=create_news_letter, args=(send_mail,), daemon=True)
     thread.start()
     logging.info("Started create_news_letter in a new thread.")
+    
+    # IMPORTANT: Schedule the next newsletter after this one completes
+    # Use a separate thread to restart the timer after newsletter completes
+    def restart_timer_after_completion():
+        thread.join()  # Wait for newsletter to complete
+        logging.info("Newsletter completed, scheduling next newsletter")
+        find_and_start_newsletter_timer()
+    
+    restart_thread = threading.Thread(target=restart_timer_after_completion, daemon=True)
+    restart_thread.start()
 
 
 """CHECKING + TIME RELATED"""
 def check_mails():
-    global active, days, release_time_str, seconds_between_checks, whitelisted_senders, newsletter_email, newsletter_timer_thread, gh
+    global active, days, release_time_str, seconds_between_checks, whitelisted_senders, newsletter_email, newsletter_timer_thread, gh, limit_newest
     logging.info("Checking mails for reposts or changes to config")
     logging.debug(f"Current newsletter_email: {newsletter_email}")
 
@@ -225,7 +237,7 @@ def check_mails():
         logging.info("Found unprocessed mail to consider for config or repost: %s", msg)
         # parse the mail
         mail = gh.parse_email(msg["id"])
-        logging.info("Parsed mail: %s", mail)
+        logging.info("Parsed mail (first 5 words): %s", " ".join(mail.get("text", "").split()[:5]))
         
         # Extract just the email address from the full sender string
         sender_email = extract_email_address(mail["sender"])
@@ -238,7 +250,7 @@ def check_mails():
 
                 new_modifications = json.loads(mail["text"])
                 logging.info("New modifications: %s", new_modifications)
-                logging.info("OLD config: %s", {"active": active, "days": days, "release_time_str": release_time_str, "seconds_between_checks": seconds_between_checks, "whitelisted_senders": whitelisted_senders, "newsletter_email": newsletter_email})
+                logging.info("OLD config: %s", {"active": active, "days": days, "release_time_str": release_time_str, "seconds_between_checks": seconds_between_checks, "whitelisted_senders": whitelisted_senders, "newsletter_email": newsletter_email, "limit_newest": limit_newest})
 
                 should_send_now = False
 
@@ -256,15 +268,17 @@ def check_mails():
                         whitelisted_senders = value
                     elif key == "newsletter_email":
                         newsletter_email = value
+                    elif key == "limit_newest":
+                        limit_newest = value
                     elif key == "send_now":
                         should_send_now = value
                         logging.info("Sending newsletter now")
                 
-                logging.info("NEW config: %s", {"active": active, "days": days, "release_time_str": release_time_str, "seconds_between_checks": seconds_between_checks, "whitelisted_senders": whitelisted_senders, "newsletter_email": newsletter_email})
+                logging.info("NEW config: %s", {"active": active, "days": days, "release_time_str": release_time_str, "seconds_between_checks": seconds_between_checks, "whitelisted_senders": whitelisted_senders, "newsletter_email": newsletter_email, "limit_newest": limit_newest})
 
                 # update the setup file
                 with open("configs/setup.json", "w") as f:
-                    json.dump({"active": active, "days": days, "release_time_str": release_time_str, "seconds_between_checks": seconds_between_checks, "whitelisted_senders": whitelisted_senders, "newsletter_email": newsletter_email}, f)
+                    json.dump({"active": active, "days": days, "release_time_str": release_time_str, "seconds_between_checks": seconds_between_checks, "whitelisted_senders": whitelisted_senders, "newsletter_email": newsletter_email, "limit_newest": limit_newest}, f)
                 
                 # archive the mail
                 gh.update_email_state(msg["id"], labels_to_add=["ANALYZED"])
@@ -275,9 +289,9 @@ def check_mails():
                     if newsletter_timer_thread:
                         newsletter_timer_thread.cancel()
                     create_news_letter_threaded(send_mail=True)
-                    find_and_start_newsletter_timer()
+                    # Note: find_and_start_newsletter_timer() will be called automatically after newsletter completes
 
-                # stop the newsletter thread
+                # restart the newsletter thread with new config
                 elif newsletter_timer_thread:
                     newsletter_timer_thread.cancel()
                     find_and_start_newsletter_timer()
@@ -322,6 +336,7 @@ def find_and_start_newsletter_timer():
             weekdays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
             today_idx = now.weekday()
 
+            days_ahead = None  # Initialize to avoid undefined variable
             # Find next day index in sorted fashion (wraparound included)
             for offset in range(1, 8):
                 next_idx = (today_idx + offset) % 7
@@ -329,6 +344,11 @@ def find_and_start_newsletter_timer():
                 if next_day in days:
                     days_ahead = offset
                     break
+            
+            # If no valid day found, log error and return
+            if days_ahead is None:
+                logging.error(f"No valid days found in configuration: {days}. Valid days are: {weekdays}")
+                return
 
             # Set target datetime to the next valid day at release_time
             next_date = now + timedelta(days=days_ahead)

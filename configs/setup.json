@@ -1,0 +1,10 @@
+{
+    "active": true, 
+    "days": ["Monday", "Friday", "Wednesday", "Saturday"], 
+    "release_time_str": "03:50", 
+    "seconds_between_checks": 5, 
+    "whitelisted_senders": ["matteo.giorgetti.05@gmail.com"], 
+    "newsletter_email": "matteo.giorgetti.05@gmail.com", 
+    "limit_newest": 5,
+    "newsletter_email_subject": "Newsletter"
+}

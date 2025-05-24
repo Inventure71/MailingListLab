@@ -1,0 +1,21 @@
+# Essential packages for MailingListLab
+# Web scraping and email processing
+beautifulsoup4==4.13.4
+selenium==4.32.0
+requests==2.32.3
+
+# Google APIs for Gmail and Gemini
+google-api-python-client==2.170.0
+google-auth==2.40.2
+google-auth-httplib2==0.2.0
+google-auth-oauthlib==1.2.2
+google-genai==1.16.1
+
+# Email and HTTP
+httpx==0.28.1
+
+# JSON and validation
+pydantic==2.11.5
+
+# Async operations
+trio==0.30.0 

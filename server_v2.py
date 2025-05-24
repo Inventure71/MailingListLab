@@ -35,9 +35,10 @@ def check_directories():
 
     if not os.path.exists("files"):
         os.makedirs("files")
-    if not os.path.exists("files/setup.json"):
+
+    if not os.path.exists("configs/setup.json"):
         logging.warning("Setup file not found, creating default setup file")
-        with open("files/setup.json", "w") as f:
+        with open("configs/setup.json", "w") as f:
             json.dump({"active": True, "days": [], "release_time_str": "", "seconds_between_checks": 10}, f)
 
 check_directories()
@@ -50,11 +51,12 @@ seconds_between_checks = 10
 whitelisted_senders = []
 newsletter_timer_thread = None
 newsletter_email = ""
+limit_newest = None
 """DEFAULT VALUES"""
 
 
 def load_setup():
-    with open("files/setup.json", "r") as f:
+    with open("configs/setup.json", "r") as f:
         setup = json.load(f)
 
     active = setup.get("active", True)
@@ -63,14 +65,14 @@ def load_setup():
     seconds_between_checks = setup.get("seconds_between_checks", 10)
     whitelisted_senders = setup.get("whitelisted_senders", [])
     newsletter_email = setup.get("newsletter_email", "")
-    
+    limit_newest = setup.get("limit_newest", 10)
     if not newsletter_email:
         logging.warning("newsletter_email is not configured in setup.json! Email sending will be disabled.")
     
-    logging.info("active: %s, days: %s, release_time_str: %s, seconds_between_checks: %s, whitelisted_senders: %s, newsletter_email: %s", active, days, release_time_str, seconds_between_checks, whitelisted_senders, newsletter_email)
-    return active, days, release_time_str, seconds_between_checks, whitelisted_senders, newsletter_email
+    logging.info("active: %s, days: %s, release_time_str: %s, seconds_between_checks: %s, whitelisted_senders: %s, newsletter_email: %s, limit_newest: %s", active, days, release_time_str, seconds_between_checks, whitelisted_senders, newsletter_email, limit_newest)
+    return active, days, release_time_str, seconds_between_checks, whitelisted_senders, newsletter_email, limit_newest
 
-active, days, release_time_str, seconds_between_checks, whitelisted_senders, newsletter_email = load_setup()
+active, days, release_time_str, seconds_between_checks, whitelisted_senders, newsletter_email, limit_newest = load_setup()
 
 gh = GmailHelper()
 gemini_handler = GeminiHandler()
@@ -140,7 +142,7 @@ def create_news_letter(send_mail=True):
             read_status=2,  # both read and unread
             archived_status=0, # 0: only non-archived (in INBOX)
             exclude_labels=["ANALYZED"],
-            limit_newest=5,  # Limit to newest 100 emails for performance
+            limit_newest=limit_newest,  # Limit to newest 100 emails for performance
         )
 
         logging.debug("Found %s unprocessed mails", len(msgs))
@@ -213,7 +215,7 @@ def check_mails():
         start_date=today_str,
         end_date=today_str,
         read_status=2, # both read and unread
-        archived_status=0, # ❌ FIXED: only non-archived (was 2 - both, causing infinite loop)
+        archived_status=0,
         exclude_labels=["NOT_WHITELISTED", "ANALYZED"],
     )
 
@@ -261,13 +263,14 @@ def check_mails():
                 logging.info("NEW config: %s", {"active": active, "days": days, "release_time_str": release_time_str, "seconds_between_checks": seconds_between_checks, "whitelisted_senders": whitelisted_senders, "newsletter_email": newsletter_email})
 
                 # update the setup file
-                with open("files/setup.json", "w") as f:
+                with open("configs/setup.json", "w") as f:
                     json.dump({"active": active, "days": days, "release_time_str": release_time_str, "seconds_between_checks": seconds_between_checks, "whitelisted_senders": whitelisted_senders, "newsletter_email": newsletter_email}, f)
                 
                 # archive the mail
-                gh.archive_email(msg["id"])
                 gh.update_email_state(msg["id"], labels_to_add=["ANALYZED"])
+                gh.archive_email(msg["id"])
 
+                # send the newsletter
                 if should_send_now:
                     if newsletter_timer_thread:
                         newsletter_timer_thread.cancel()

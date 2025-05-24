@@ -4,6 +4,7 @@ import os
 import threading
 import logging
 import time
+from logging.handlers import RotatingFileHandler
 
 from modules.AI.flows import analyze_repost, analyze_emails_newsletter
 from modules.AI.use_gemini_v2 import GeminiHandler
@@ -17,11 +18,19 @@ from modules.utils.extract_email_address import extract_email_address
 # TODO: add google form at the end of emails to collect feedback
 
 """LOGGING"""
+# create a rotating file handler that limits log file size
+rotating_handler = RotatingFileHandler(
+    "logs/server.log", 
+    maxBytes=5*1024*1024,  # 5MB per file
+    backupCount=3  # keep 3 backup files (server.log.1, server.log.2, server.log.3)
+)
+rotating_handler.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] %(message)s"))
+
 logging.basicConfig(
-    level=logging.DEBUG,
+    level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(message)s",
     handlers=[
-        logging.FileHandler("server.log"),
+        rotating_handler,
         logging.StreamHandler()
     ]
 )
@@ -37,6 +46,9 @@ def check_directories():
 
     if not os.path.exists("files"):
         os.makedirs("files")
+
+    if not os.path.exists("logs"):
+        os.makedirs("logs")
 
     if not os.path.exists("configs/setup.json"):
         logging.warning("Setup file not found, creating default setup file")

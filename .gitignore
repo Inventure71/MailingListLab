@@ -12,3 +12,7 @@ spiders/__pycache__
 modules/__pycache__
 files/__pycache__
 test/
+testing.py
+server.log
+email_monitor.log
+images/

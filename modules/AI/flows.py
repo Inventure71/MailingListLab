@@ -30,6 +30,26 @@ class Scraper:
         self.driver.get(url)
         return self.driver
 
+    def _filter_problematic_links(self, soup: BeautifulSoup) -> BeautifulSoup:
+        """Remove problematic links that could trigger system actions"""
+        filtered_count = 0
+        # Find all anchor tags
+        for link in soup.find_all("a", href=True):
+            href = link.get("href", "").lower()
+            # Remove links that start with problematic protocols
+            if href.startswith(('mailto:', 'tel:', 'sms:', 'callto:', 'skype:', 'javascript:')):
+                # Convert to span to preserve text but remove link functionality
+                span = soup.new_tag("span")
+                span.string = link.get_text()
+                link.replace_with(span)
+                filtered_count += 1
+                logging.debug(f"Filtered problematic link: {href}")
+        
+        if filtered_count > 0:
+            logging.info(f"Filtered {filtered_count} problematic links from scraped content")
+        
+        return soup
+
     def scrape_website(self, url: str, download_images=True, folder_extra_name: str = "") -> str:
         driver = self.init_driver(url)
         html = driver.page_source
@@ -37,10 +57,20 @@ class Scraper:
 
         soup = BeautifulSoup(html, "html.parser")
 
+        # Remove scripts/styles, then filter links
+        for tag in soup(["script", "style", "noscript", "iframe"]):
+            tag.extract()
+        soup = self._filter_problematic_links(soup)
+
+        # Download images if desired (this doesn't affect the text extraction)
         if download_images:
             self._download_images_from_soup(soup, base_url=url, folder_extra_name=folder_extra_name)
 
-        return soup.prettify()
+        # Extract *only* visible text, normalize whitespace:
+        text = soup.get_text(separator="\n", strip=True)
+        # Collapse multiple blank lines:
+        cleaned = re.sub(r'\n\s*\n+', '\n\n', text)
+        return cleaned
 
     def _download_images_from_soup(self, soup: BeautifulSoup, base_url: str, folder_extra_name: str = ""):
         folder_name = "images/" + folder_extra_name + "/" + sanitize_string(base_url)
@@ -116,7 +146,7 @@ def analyze_emails_newsletter(emails, intensive_mode=False, include_link_info=Fa
 
     # FIRST PASS: scrape all links WITHOUT images and build comprehensive content
     combined_content = ""
-    email_link_mapping = {}  # Maps article IDs to (email_idx, link_idx) for re-scraping
+    article_data = {}  # Maps article IDs to complete article information
     article_id_counter = 0
 
     for email_idx, email in enumerate(emails):
@@ -129,30 +159,51 @@ def analyze_emails_newsletter(emails, intensive_mode=False, include_link_info=Fa
         combined_content += email_header
         
         # Add email content
+        email_content = ""
         if "content" in email:
-            combined_content += f"Content:\n{email['content']}\n"
+            email_content = f"Content:\n{email['content']}\n"
         elif "body" in email:
-            combined_content += f"Body:\n{email['body']}\n"
+            email_content = f"Body:\n{email['body']}\n"
         elif "text" in email:
-            combined_content += f"Text:\n{email['text']}\n"
+            email_content = f"Text:\n{email['text']}\n"
+        combined_content += email_content
 
         # Process links without images first
         links = email.get("links", [])
         for link_idx, link in enumerate(links):
             article_id = f"ARTICLE_{article_id_counter}"
-            email_link_mapping[article_id] = (email_idx, link_idx, link)
             article_id_counter += 1
             
             scraper = Scraper()
             html = scraper.scrape_website(link, download_images=False, folder_extra_name=folder_extra_name)
             link_header = f"\n--- {article_id} - Link {link_idx+1}: {link} ---\n"
+            
+            # Store complete article information for later use
+            article_data[article_id] = {
+                'email_idx': email_idx,
+                'link_idx': link_idx,
+                'link': link,
+                'email': email,
+                'email_content': email_content,
+                'email_header': f"\n{'='*40}\n{article_id} - EMAIL {email_idx+1}" + 
+                               (f" (ID: {email['id']})" if "id" in email else "") +
+                               (f" - Subject: {email['subject']}" if "subject" in email else "") +
+                               f"\n{'='*40}\n",
+                'scraped_html': html,
+                'link_header': f"\n--- {article_id} - Link: {link} ---\n"
+            }
+            
             if html is not None:
+                logging.info(f"Scraped content for {link} (first 500 chars): {html[:500]}")
                 combined_content += link_header + html + "\n"
             else:
+                logging.info(f"Failed to scrape content for {link}")
                 combined_content += link_header + "[Failed to scrape this link]\n"
 
     # Send to Gemini for evaluation
+    logging.info(f"Sending to Gemini for evaluation (first 500 chars): {combined_content[:500]}")
     evaluation_response = gemini_handler.evaluate_articles_gemini(combined_content)
+    logging.info(f"Received evaluation response from Gemini: {evaluation_response}")
     
     # Parse JSON response
     try:
@@ -165,32 +216,23 @@ def analyze_emails_newsletter(emails, intensive_mode=False, include_link_info=Fa
     # Sort by relevancy and get top 5
     all_articles = sorted(all_articles, key=lambda x: x.get("relevancy", 0), reverse=True)
     top_5_articles = all_articles[:5]
+    logging.info(f"Top 5 articles selected: {[{'ID': a.get('ID', ''), 'relevancy': a.get('relevancy', 0)} for a in top_5_articles]}")
 
-    # SECOND PASS: re-scrape links for top 5 articles WITH images
+    # SECOND PASS: build content for top 5 articles using stored data and re-scrape only for images
     top_5_combined_content = ""
     
     for article in top_5_articles:
         article_id = article.get("ID", "")
-        if article_id in email_link_mapping:
-            email_idx, link_idx, link = email_link_mapping[article_id]
-            email = emails[email_idx]
+        logging.info(f"Looking for article_id '{article_id}' in article_data")
+        logging.info(f"Available keys in article_data: {list(article_data.keys())}")
+        
+        if article_id in article_data:
+            logging.info(f"Found match for article_id '{article_id}'")
+            stored_data = article_data[article_id]
             
-            # Add email header and content for this article
-            email_header = f"\n{'='*40}\n{article_id} - EMAIL {email_idx+1}"
-            if "id" in email:
-                email_header += f" (ID: {email['id']})"
-            if "subject" in email:
-                email_header += f" - Subject: {email['subject']}"
-            email_header += f"\n{'='*40}\n"
-            top_5_combined_content += email_header
-            
-            # Add email content
-            if "content" in email:
-                top_5_combined_content += f"Content:\n{email['content']}\n"
-            elif "body" in email:
-                top_5_combined_content += f"Body:\n{email['body']}\n"
-            elif "text" in email:
-                top_5_combined_content += f"Text:\n{email['text']}\n"
+            # Use stored email header and content
+            top_5_combined_content += stored_data['email_header']
+            top_5_combined_content += stored_data['email_content']
 
             # Add Gemini's evaluation info
             top_5_combined_content += f"Source: {article.get('source', '')}\n"
@@ -198,17 +240,28 @@ def analyze_emails_newsletter(emails, intensive_mode=False, include_link_info=Fa
             top_5_combined_content += f"Reasoning: {article.get('reasoning', '')}\n"
             top_5_combined_content += f"Relevancy: {article.get('relevancy', 0)}\n"
             
-            # Re-scrape the link WITH images
-            scraper = Scraper()
-            html = scraper.scrape_website(link, download_images=True, folder_extra_name=folder_extra_name)
-            link_header = f"\n--- {article_id} - Link: {link} ---\n"
-            if html is not None:
-                top_5_combined_content += link_header + html + "\n"
+            # Use stored scraped content, but re-scrape for images if needed
+            if include_images:
+                logging.info(f"Re-scraping {stored_data['link']} for images only")
+                scraper = Scraper()
+                # Re-scrape WITH images for this specific link
+                html_with_images = scraper.scrape_website(stored_data['link'], download_images=True, folder_extra_name=folder_extra_name)
+                if html_with_images is not None:
+                    top_5_combined_content += stored_data['link_header'] + html_with_images + "\n"
+                else:
+                    # Fall back to stored HTML if re-scraping fails
+                    logging.warning(f"Failed to re-scrape {stored_data['link']} for images, using stored content")
+                    top_5_combined_content += stored_data['link_header'] + (stored_data['scraped_html'] or "[Failed to scrape this link]") + "\n"
             else:
-                top_5_combined_content += link_header + "[Failed to scrape this link]\n"
+                # Just use the stored HTML content
+                top_5_combined_content += stored_data['link_header'] + (stored_data['scraped_html'] or "[Failed to scrape this link]") + "\n"
+        else:
+            logging.warning(f"No match found for article_id '{article_id}' in article_data")
 
     # Send comprehensive info about top 5 to divide_news_gemini
+    logging.info(f"Sending to Gemini for news division (first 500 chars): {top_5_combined_content[:500]}")
     articles_response = gemini_handler.divide_news_gemini(top_5_combined_content)
+    logging.info(f"Received articles response from Gemini: {articles_response}")
     
     # Parse final response
     try:

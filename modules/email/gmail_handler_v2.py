@@ -19,6 +19,9 @@ SCOPES = [
     "https://www.googleapis.com/auth/gmail.send",
 ]
 
+# Define system labels consistently across all methods
+SYSTEM_LABELS = {"INBOX", "UNREAD", "STARRED", "SENT", "IMPORTANT", "TRASH", "SPAM", "DRAFT"}
+
 
 class GmailHelper:
     """
@@ -59,18 +62,18 @@ class GmailHelper:
                 f.write(creds.to_json())
         return creds
 
-        # ---------- 1. Retrieve e-mails (updated) -------------------------------
-    
     def list_emails(
         self,
         *,
         start_date: Optional[str] = None,  # "YYYY/MM/DD"
         end_date: Optional[str] = None,    # "YYYY/MM/DD"
-        label: Optional[str] = None,       # label *name* (not ID)
-        label_included: bool = True,       # True ↦ must have, False ↦ must NOT
-        read: Optional[bool] = None,       # True ↦ is:read, False ↦ is:unread
+        archived_status: int = 0,          # 0: non-archived (in INBOX), 1: archived (not INBOX), 2: both
+        read_status: int = 2,              # 0: unread, 1: read, 2: both
+        include_labels: Optional[List[str]] = None, # Must have ALL these labels
+        exclude_labels: Optional[List[str]] = None, # Must NOT have ANY of these labels
         sender: Optional[str] = None,
         max_results: int = 100,
+        limit_newest: Optional[int] = None,  # Limit to newest N emails (oldest eliminated)
     ) -> List[Dict]:
         """
         Return message stubs that satisfy the given filters.
@@ -78,9 +81,18 @@ class GmailHelper:
 
         `start_date` and `end_date` are inclusive (we add +1 day internally
         for the Gmail `before:` keyword which is < exclusive).
+        `archived_status`: 0 for in INBOX, 1 for not in INBOX (archived), 2 for no filter.
+        `read_status`: 0 for unread, 1 for read, 2 for no filter.
+        `limit_newest`: If provided, returns only the newest N emails (Gmail returns newest first by default).
         """
         query_parts: List[str] = []
-        label_ids_filter: Optional[List[str]] = None  # only used when *including*
+        label_ids_to_include_server_side: Optional[List[str]] = None
+
+        # Determine the actual limit to use for the API call
+        # Gmail returns emails in reverse chronological order (newest first)
+        api_max_results = max_results
+        if limit_newest is not None and limit_newest < max_results:
+            api_max_results = limit_newest
 
         # --- date range -----------------------------------------------------
         if start_date:
@@ -89,37 +101,61 @@ class GmailHelper:
             dt = datetime.strptime(end_date, "%Y/%m/%d") + timedelta(days=1)
             query_parts.append(f"before:{dt.strftime('%Y/%m/%d')}")
 
-        # --- read / unread --------------------------------------------------
-        if read is True:
-            query_parts.append("is:read")
-        elif read is False:
+        # --- read / unread status -------------------------------------------
+        if read_status == 0: # unread
             query_parts.append("is:unread")
+        elif read_status == 1: # read
+            query_parts.append("is:read")
+        # if read_status == 2, no filter is applied (default)
 
+        # --- archived status ------------------------------------------------
+        if archived_status == 0: # Non-archived (must be in INBOX)
+            query_parts.append("in:inbox")
+        elif archived_status == 1: # Archived (must NOT be in INBOX, also not TRASH/SPAM for clarity)
+            query_parts.append("-in:inbox -in:trash -in:spam")
+        # if archived_status == 2, no filter is applied (default behavior for archived)
+        
         # --- sender ---------------------------------------------------------
         if sender:
             query_parts.append(f"from:{sender}")
 
-        # --- label filter ---------------------------------------------------
-        if label:
-            # system labels already *are* IDs
-            sys_labels = {"INBOX", "UNREAD", "STARRED", "SENT", "IMPORTANT", "TRASH", "SPAM", "DRAFT"}
-            if label.upper() in sys_labels:
-                label_id = label.upper()
-            else:
-                index = self._get_labels_indexed_by_name()
-                label_id = index.get(label.lower())
-                if not label_id:
-                    # label doesn't exist → nothing can match if it *must* be present
-                    if label_included:
-                        return []
-                    # if it must be *absent* we can just ignore it (everything qualifies)
-                    label_id = None
-
-            if label_id:
-                if label_included:
-                    label_ids_filter = [label_id]          # server-side include
+        # --- label filters --------------------------------------------------
+        # Optimize: get all labels only once if we need them
+        all_user_labels = None
+        if include_labels or exclude_labels:
+            all_user_labels = self._get_labels_indexed_by_name()
+        
+        # Handle included labels
+        if include_labels:
+            current_label_ids_to_include = []
+            for label_name in include_labels:
+                label_id = None
+                if label_name.upper() in SYSTEM_LABELS:
+                    label_id = label_name.upper()
                 else:
-                    query_parts.append(f"-label:{label_id}")  # text query exclude
+                    label_id = all_user_labels.get(label_name.lower())
+                
+                if label_id:
+                    current_label_ids_to_include.append(label_id)
+                else:
+                    # If a required label doesn't exist, no email can match
+                    return [] 
+            if current_label_ids_to_include:
+                # Gmail API's labelIds parameter performs an AND operation.
+                # So, we can use it for server-side filtering of included labels.
+                label_ids_to_include_server_side = current_label_ids_to_include
+
+        # Handle excluded labels (always via query string)
+        if exclude_labels:
+            for label_name in exclude_labels:
+                label_id = None
+                if label_name.upper() in SYSTEM_LABELS:
+                    label_id = label_name.upper()
+                else:
+                    label_id = all_user_labels.get(label_name.lower())
+                
+                if label_id: # Only add to query if the label exists
+                    query_parts.append(f"-label:{label_id}")
 
         query_str = " ".join(query_parts) if query_parts else None
 
@@ -130,14 +166,21 @@ class GmailHelper:
                 .list(
                     userId="me",
                     q=query_str,
-                    labelIds=label_ids_filter,  # None → ignored
-                    maxResults=max_results,
+                    labelIds=label_ids_to_include_server_side, 
+                    maxResults=api_max_results,  # Use the computed limit
                 )
                 .execute()
             )
-            return resp.get("messages", [])
+            messages = resp.get("messages", [])
+            
+            # Additional client-side limiting if needed
+            # (Gmail should already return in newest-first order, but this ensures consistency)
+            if limit_newest is not None and len(messages) > limit_newest:
+                messages = messages[:limit_newest]
+                
+            return messages
         except HttpError as e:
-            print("Gmail API error while listing messages:", e)
+            print(f"Gmail API error while listing messages: {e}")
             return []
 
     def parse_email(self, message_id: str) -> Dict:
@@ -196,9 +239,26 @@ class GmailHelper:
         if not html:
             return [], []
         soup = BeautifulSoup(html, "html.parser")
-        links = [a["href"] for a in soup.find_all("a", href=True)]
+        
+        # Extract links but filter out problematic ones
+        raw_links = [a["href"] for a in soup.find_all("a", href=True)]
+        filtered_links = []
+        
+        for link in raw_links:
+            # Skip mailto:, tel:, sms:, and other protocol links that trigger system actions
+            if link.lower().startswith(('mailto:', 'tel:', 'sms:', 'callto:', 'skype:')):
+                continue
+            # Skip javascript: links
+            if link.lower().startswith('javascript:'):
+                continue
+            # Skip empty or anchor-only links
+            if not link.strip() or link.strip() == '#':
+                continue
+                
+            filtered_links.append(link)
+        
         images = [img["src"] for img in soup.find_all("img", src=True)]
-        return links, images
+        return filtered_links, images
 
     def delete_email(self, message_id: str) -> bool:
         try:
@@ -232,13 +292,13 @@ class GmailHelper:
 
         # convert custom label names → IDs
         for name in labels_to_add or []:
-            if name.upper() in ("INBOX", "UNREAD", "STARRED"):  # system labels
+            if name.upper() in SYSTEM_LABELS:  # Use consistent system labels set
                 add_ids.append(name.upper())
             else:
                 add_ids.append(self._ensure_label_id(name))
 
         for name in labels_to_remove or []:
-            if name.upper() in ("INBOX", "UNREAD", "STARRED"):
+            if name.upper() in SYSTEM_LABELS:  # Use consistent system labels set
                 remove_ids.append(name.upper())
             else:
                 remove_ids.append(self._ensure_label_id(name))
@@ -301,7 +361,7 @@ class GmailHelper:
             print(f"HTML file not found: {html_path}")
             return None
 
-        # ---------- helpers -----------------------------------------------------
+    # ---------- helpers -----------------------------------------------------
     
     # ---------- label helpers -----------------------------------------------------
     def _get_labels_indexed_by_name(self) -> Dict[str, str]:
@@ -315,7 +375,7 @@ class GmailHelper:
     def _ensure_label_id(self, label_name: str) -> str:
         """
         Return the label ID for `label_name` (case-insensitive).  
-        Creates the label if it doesn’t exist and returns the new ID.
+        Creates the label if it doesn't exist and returns the new ID.
         """
         index = self._get_labels_indexed_by_name()
         if label_name.lower() in index:                # already exists
@@ -335,19 +395,100 @@ class GmailHelper:
 if __name__ == "__main__":
     gh = GmailHelper()
 
-    # 1️⃣  List unread messages from Alice between two dates
-    msgs = gh.list_emails(
-        start_date="2025/05/01",
-        end_date="2025/05/22",
-        read=True,
-        label="TEST",
-        label_included=True,
-        #sender="alice@example.com",
+    print("--- Example 1: Unread, in Inbox, from past 7 days ---")
+    seven_days_ago = (datetime.now() - timedelta(days=7)).strftime("%Y/%m/%d")
+    today = datetime.now().strftime("%Y/%m/%d")
+    ex1_msgs = gh.list_emails(
+        start_date=seven_days_ago,
+        end_date=today,
+        read_status=0,       # Unread
+        archived_status=0,   # In Inbox
     )
+    print(f"Found {len(ex1_msgs)} emails.")
+    for msg_stub in ex1_msgs[:2]: # Print details for first 2
+        details = gh.parse_email(msg_stub['id'])
+        print(f"  ID: {details['id']}, Subject: {details['title']}, Sender: {details['sender']}, Date: {details['date']}")
 
-    if msgs:
-        details = gh.parse_email(msgs[0]["id"])
-        print(details["title"], details["sender"], details["links"], details["date"])
+    print("\n--- Example 2: Read, Archived, with label 'ANALYZED' ---")
+    ex2_msgs = gh.list_emails(
+        read_status=1,       # Read
+        archived_status=1,   # Archived
+        include_labels=["ANALYZED"],
+    )
+    print(f"Found {len(ex2_msgs)} emails.")
+    for msg_stub in ex2_msgs[:2]:
+        details = gh.parse_email(msg_stub['id'])
+        print(f"  ID: {details['id']}, Subject: {details['title']}, Labels: {details['labels']}")
 
-        gh.update_email_state(msgs[0]["id"], read=True, labels_to_add=["TEST"])
-        #gh.archive_email(msgs[0]["id"])
+    print("\n--- Example 3: Any status, from 'specific.sender@example.com', excluding 'OldProject' label ---")
+    ex3_msgs = gh.list_emails(
+        read_status=2,              # Any read status
+        archived_status=2,          # Any archive status
+        sender="matteo.giorgetti.05@gmail.com",
+        exclude_labels=["OldProject"],
+    )
+    print(f"Found {len(ex3_msgs)} emails.")
+    for msg_stub in ex3_msgs[:2]:
+        details = gh.parse_email(msg_stub['id'])
+        print(f"  ID: {details['id']}, Subject: {details['title']}, Sender: {details['sender']}")
+
+    print("\n--- Example 4: Unread, in Inbox, must have 'Urgent' and 'Work' labels ---")
+    ex4_msgs = gh.list_emails(
+        read_status=0,
+        archived_status=0,
+        include_labels=["Urgent", "Work"],
+    )
+    print(f"Found {len(ex4_msgs)} emails.")
+    for msg_stub in ex4_msgs[:2]:
+        details = gh.parse_email(msg_stub['id'])
+        print(f"  ID: {details['id']}, Subject: {details['title']}, Labels: {details['labels']}")
+
+    print("\n--- Example 5: Read, in Inbox, from past 2 days, excluding 'Newsletter' and 'Promotions' ---")
+    two_days_ago = (datetime.now() - timedelta(days=2)).strftime("%Y/%m/%d")
+    ex5_msgs = gh.list_emails(
+        start_date=two_days_ago,
+        end_date=today,
+        read_status=1, # Read
+        archived_status=0, # In Inbox
+        exclude_labels=["Newsletter", "Promotions"],
+    )
+    print(f"Found {len(ex5_msgs)} emails.")
+    for msg_stub in ex5_msgs[:2]:
+        details = gh.parse_email(msg_stub['id'])
+        print(f"  ID: {details['id']}, Subject: {details['title']}, Date: {details['date']}")
+
+    # Example of testing label creation and filtering
+    print("\n--- Example 6: Test label filtering with both include and exclude ---")
+    # This example tests both include_labels and exclude_labels together
+    ex6_msgs = gh.list_emails(
+        read_status=2,              # Any read status
+        archived_status=2,          # Any archive status  
+        include_labels=["INBOX"],   # Must be in INBOX (system label)
+        exclude_labels=["SPAM", "TRASH"],  # Exclude SPAM and TRASH (system labels)
+        max_results=5,
+    )
+    print(f"Found {len(ex6_msgs)} emails in INBOX excluding SPAM/TRASH.")
+    for msg_stub in ex6_msgs[:2]:
+        details = gh.parse_email(msg_stub['id'])
+        print(f"  ID: {details['id']}, Subject: {details['title']}, Labels: {details['labels']}")
+
+    print("\n--- Example 7: Test limit_newest parameter - Get only newest 3 emails ---")
+    ex7_msgs = gh.list_emails(
+        read_status=2,              # Any read status
+        archived_status=0,          # In Inbox only
+        limit_newest=3,             # Limit to newest 3 emails
+    )
+    print(f"Found {len(ex7_msgs)} newest emails (should be max 3).")
+    for msg_stub in ex7_msgs:
+        details = gh.parse_email(msg_stub['id'])
+        print(f"  ID: {details['id']}, Subject: {details['title']}, Date: {details['date']}")
+
+    # Example of how you might set up a label for testing include_labels
+    # label_id = gh._ensure_label_id("TestLabel") 
+    # print(f"\nEnsured 'TestLabel' exists with ID: {label_id}")
+    # If you have a message ID, you can add this label to it for testing Example 2:
+    # test_message_id = "YOUR_TEST_MESSAGE_ID_HERE" 
+    # if test_message_id != "YOUR_TEST_MESSAGE_ID_HERE":
+    #     gh.update_email_state(test_message_id, labels_to_add=["TestLabel"], read=True)
+    #     gh.archive_email(test_message_id)
+    #     print(f"Updated message {test_message_id} for Example 2 testing.")

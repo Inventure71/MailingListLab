@@ -16,7 +16,7 @@ from modules.utils.extract_email_address import extract_email_address
 
 """LOGGING"""
 logging.basicConfig(
-    level=logging.INFO,
+    level=logging.DEBUG,
     format="%(asctime)s [%(levelname)s] %(message)s",
     handlers=[
         logging.FileHandler("server.log"),
@@ -57,12 +57,16 @@ def load_setup():
     with open("files/setup.json", "r") as f:
         setup = json.load(f)
 
-    active = setup["active"]
-    days = setup["days"]
-    release_time_str = setup["release_time_str"]
-    seconds_between_checks = setup["seconds_between_checks"]
-    whitelisted_senders = setup["whitelisted_senders"]
-    newsletter_email = setup["newsletter_email"]
+    active = setup.get("active", True)
+    days = setup.get("days", [])
+    release_time_str = setup.get("release_time_str", "")
+    seconds_between_checks = setup.get("seconds_between_checks", 10)
+    whitelisted_senders = setup.get("whitelisted_senders", [])
+    newsletter_email = setup.get("newsletter_email", "")
+    
+    if not newsletter_email:
+        logging.warning("newsletter_email is not configured in setup.json! Email sending will be disabled.")
+    
     logging.info("active: %s, days: %s, release_time_str: %s, seconds_between_checks: %s, whitelisted_senders: %s, newsletter_email: %s", active, days, release_time_str, seconds_between_checks, whitelisted_senders, newsletter_email)
     return active, days, release_time_str, seconds_between_checks, whitelisted_senders, newsletter_email
 
@@ -74,83 +78,149 @@ gemini_handler = GeminiHandler()
 
 """REPOST"""
 def create_repost_email(parsed_mail, send_mail=True):
-    repost_email_generator = RepostEmailGenerator()
+    try:
+        # Create a separate Gmail instance for this thread to avoid thread safety issues
+        thread_gh = GmailHelper()
+        repost_email_generator = RepostEmailGenerator()
 
-    articles = analyze_repost(parsed_mail, intensive_mode=True, include_link_info=True, include_images=True, gemini_handler=gemini_handler)
+        articles = analyze_repost(parsed_mail, intensive_mode=True, include_link_info=True, include_images=True, gemini_handler=gemini_handler)
 
-    mail_htlm = repost_email_generator.generate_email(articles)
+        mail_htlm = repost_email_generator.generate_email(articles)
 
-    gh.update_email_state(parsed_mail["id"], labels_to_add=["ANALYZED"])
+        # Update email state with retry logic
+        max_retries = 3
+        for attempt in range(max_retries):
+            try:
+                thread_gh.update_email_state(parsed_mail["id"], labels_to_add=["ANALYZED"])
+                break
+            except Exception as e:
+                if attempt == max_retries - 1:
+                    logging.error(f"Failed to label email {parsed_mail['id']} after {max_retries} attempts: {e}")
+                else:
+                    logging.warning(f"Attempt {attempt + 1} failed to label email {parsed_mail['id']}: {e}, retrying...")
+                    time.sleep(2 ** attempt)  # exponential backoff
 
-    if send_mail:
-        gh.send_email_html(newsletter_email, "Repost", mail_htlm)
-        logging.info("Sent repost email to %s", newsletter_email)
-    else:
-        logging.info("Not sending repost email to %s", newsletter_email)
-    
-    return mail_htlm
+        if send_mail:
+            try:
+                if not newsletter_email:
+                    logging.error("newsletter_email is not configured! Cannot send repost.")
+                    return None
+                logging.info(f"Attempting to send repost email to: {newsletter_email}")
+                thread_gh.send_email_html(newsletter_email, "Repost", mail_htlm)
+                logging.info("Sent repost email to %s", newsletter_email)
+            except Exception as e:
+                logging.error(f"Failed to send repost email: {e}")
+        else:
+            logging.info("Not sending repost email to %s", newsletter_email)
+        
+        return mail_htlm
+        
+    except Exception as e:
+        logging.error(f"Error in create_repost_email: {e}")
+        return None
 
 
 """NEWSLETTER"""
 def create_news_letter(send_mail=True):
-    generator = NewsEmailGenerator()
-    
-    emails_to_analyze = [] # list of emails to analyze
+    # Create a separate Gmail instance for this thread to avoid thread safety issues
+    try:
+        logging.info("---STARTING--- Creating newsletter")
+        thread_gh = GmailHelper()
+        generator = NewsEmailGenerator()
+        
+        emails_to_analyze = [] # list of emails to analyze
 
-    # Get all unread emails from 7 days ago to today
-    start_date = (datetime.now() - timedelta(days=7)).strftime("%Y/%m/%d")
-    end_date = datetime.now().strftime("%Y/%m/%d")
+        # Get all unread emails from 7 days ago to today, that are not archived and not labeled "ANALYZED"
+        start_date = (datetime.now() - timedelta(days=7)).strftime("%Y/%m/%d")
+        end_date = datetime.now().strftime("%Y/%m/%d")
 
-    msgs = gh.list_emails(
-        start_date=start_date,
-        end_date=end_date,
-        read=False,
-        label="ANALYZED",
-        label_included=False,
-    )
+        msgs = thread_gh.list_emails(
+            start_date=start_date,
+            end_date=end_date,
+            read_status=2,  # both read and unread
+            archived_status=0, # 0: only non-archived (in INBOX)
+            exclude_labels=["ANALYZED"],
+            limit_newest=5,  # Limit to newest 100 emails for performance
+        )
 
-    logging.debug("Found %s unprocessed mails", len(msgs))
+        logging.debug("Found %s unprocessed mails", len(msgs))
 
-    for msg in msgs:
-        logging.info("Found unprocessed mail: %s", msg)
-        # parse the mail
-        mail = gh.parse_email(msg["id"])
-        logging.info("Parsed mail: %s", mail)
-        emails_to_analyze.append(mail)
-        # add the label "ANALYZED" to the mail
-        gh.update_email_state(msg["id"], labels_to_add=["ANALYZED"])
+        for msg in msgs:
+            try:
+                logging.info("Found unprocessed mail candidate for newsletter: %s", msg)
+                # parse the mail
+                mail = thread_gh.parse_email(msg["id"])
+                logging.info("Parsed mail (first 5 words): %s", " ".join(mail.get("text", "").split()[:5]))
+                emails_to_analyze.append(mail)
+                
+                # add the label "ANALYZED" to the mail with retry logic
+                max_retries = 3
+                for attempt in range(max_retries):
+                    try:
+                        thread_gh.update_email_state(msg["id"], labels_to_add=["ANALYZED"])
+                        break
+                    except Exception as e:
+                        if attempt == max_retries - 1:
+                            logging.error(f"Failed to label email {msg['id']} after {max_retries} attempts: {e}")
+                        else:
+                            logging.warning(f"Attempt {attempt + 1} failed to label email {msg['id']}: {e}, retrying...")
+                            time.sleep(2 ** attempt)  # exponential backoff
+                            
+            except Exception as e:
+                logging.error(f"Error processing email {msg.get('id', 'unknown')}: {e}")
+                continue
+        
+        # TODO: remove any duplicate articles
 
-    # TODO: remove any duplicate articles
+        articles = analyze_emails_newsletter(emails_to_analyze, intensive_mode=True, include_link_info=True, include_website_news=True, include_images=True, gemini_handler=gemini_handler)
 
-    articles = analyze_emails_newsletter(emails_to_analyze, intensive_mode=True, include_link_info=True, include_website_news=True, include_images=True, gemini_handler=gemini_handler)
+        email_html = generator.generate_email(articles)
 
-    email_html = generator.generate_email(articles)
+        if send_mail:
+            try:
+                if not newsletter_email:
+                    logging.error("newsletter_email is not configured! Cannot send newsletter.")
+                    return
+                logging.info(f"Attempting to send newsletter to: {newsletter_email}")
+                thread_gh.send_email_html(newsletter_email, "Newsletter", email_html)
+                logging.info("Sent newsletter to %s", newsletter_email)
+            except Exception as e:
+                logging.error(f"Failed to send newsletter: {e}")
+        else:
+            logging.info("Not sending newsletter to %s", newsletter_email)
+            
+    except Exception as e:
+        logging.error(f"Error in create_news_letter: {e}")
+        return
 
-    if send_mail:
-        gh.send_email_html(newsletter_email, "Newsletter", email_html)
-        logging.info("Sent newsletter to %s", newsletter_email)
-    else:
-        logging.info("Not sending newsletter to %s", newsletter_email)
+
+def create_news_letter_threaded(send_mail=True):
+    # Wrapper to run create_news_letter in a new thread
+    thread = threading.Thread(target=create_news_letter, args=(send_mail,), daemon=True)
+    thread.start()
+    logging.info("Started create_news_letter in a new thread.")
 
 
 """CHECKING + TIME RELATED"""
 def check_mails():
     global active, days, release_time_str, seconds_between_checks, whitelisted_senders, newsletter_email, newsletter_timer_thread, gh
     logging.info("Checking mails for reposts or changes to config")
+    logging.debug(f"Current newsletter_email: {newsletter_email}")
 
-    # get mails from today
+    # Get unread, non-archived emails from today that are NOT labeled "NOT_WHITELISTED"
+    today_str = datetime.now().strftime("%Y/%m/%d")
     msgs = gh.list_emails(
-        start_date=datetime.now().strftime("%Y/%m/%d"),
-        end_date=datetime.now().strftime("%Y/%m/%d"),
-        read=False,
-        label="NOT_WHITELISTED",
-        label_included=False,
+        start_date=today_str,
+        end_date=today_str,
+        read_status=2, # both read and unread
+        archived_status=0, # ❌ FIXED: only non-archived (was 2 - both, causing infinite loop)
+        exclude_labels=["NOT_WHITELISTED", "ANALYZED"],
     )
 
     print("FOUND MAILS: ", len(msgs))
 
     for msg in msgs:
-        logging.info("Found unprocessed mail: %s", msg)
+        logging.info("Found unprocessed mail to consider for config or repost: %s", msg)
         # parse the mail
         mail = gh.parse_email(msg["id"])
         logging.info("Parsed mail: %s", mail)
@@ -196,11 +266,12 @@ def check_mails():
                 
                 # archive the mail
                 gh.archive_email(msg["id"])
+                gh.update_email_state(msg["id"], labels_to_add=["ANALYZED"])
 
                 if should_send_now:
                     if newsletter_timer_thread:
                         newsletter_timer_thread.cancel()
-                    create_news_letter(send_mail=True)
+                    create_news_letter_threaded(send_mail=True)
                     find_and_start_newsletter_timer()
 
                 # stop the newsletter thread
@@ -210,8 +281,12 @@ def check_mails():
             
             else:
                 logging.info("Found non-config mail, with title: %s, checking for reposts", mail["title"])
-                create_repost_email(mail)
-                gh.archive_email(msg["id"])
+                # Launch create_repost_email in a new thread
+                repost_thread = threading.Thread(target=create_repost_email, args=(mail,), daemon=True)
+                repost_thread.start()
+                logging.info("Started create_repost_email in a new thread.")
+                
+                gh.archive_email(msg["id"]) # Archive immediately
                 logging.info("Archived mail")
         
         else:
@@ -260,7 +335,7 @@ def find_and_start_newsletter_timer():
         delay_seconds = (target_datetime - now).total_seconds()
         logging.info("Next newsletter scheduled for %s (in %.2f seconds)", target_datetime, delay_seconds)
 
-        newsletter_timer_thread = threading.Timer(delay_seconds, create_news_letter)
+        newsletter_timer_thread = threading.Timer(delay_seconds, create_news_letter_threaded)
         newsletter_timer_thread.start()
 
     except Exception as e:

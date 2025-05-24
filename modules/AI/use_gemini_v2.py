@@ -255,7 +255,7 @@ class GeminiHandler:
                     type="ARRAY",
                     items=types.Schema(
                         type="OBJECT",
-                        required=["source", "brief description", "relevancy", "location"],
+                        required=["source", "brief description", "relevancy"],
                         properties={
                             "ID": types.Schema(type="STRING"),
                             "source": types.Schema(type="STRING"),
@@ -275,6 +275,7 @@ class GeminiHandler:
             "You are a helpful assistant that evaluates the quality of the articles and the level of relvancy to the user. "
             "You are given a list of articles and their related sources content. "
             "Your task is to evaluate the relevancy of the articles for the user."
+            "IMPORTANT: For each article, use the exact ARTICLE_ID provided in the input text (e.g., ARTICLE_0, ARTICLE_1, etc.) as the ID field in your response."
             "Only include news that match these themes: Cyber\n‑Physical Systems\n-Digital\n‑Physical Integration\nRobotics\nHuman\n‑Computer Interaction\nArtificial Intelligence\nAutomation\nDecentralized Technologies\nEthics in Technology\nInterdisciplinary Research\nInnovation and Design.\n\n"
             f"‑Today is {today_date} – include only events that have not happened yet.\n"
             "‑Target audience: undergraduate & graduate students.\n"
@@ -293,13 +294,13 @@ class GeminiHandler:
                     type="ARRAY",
                     items=types.Schema(
                         type="OBJECT",
-                        required=["title", "source", "location", "description", "summary", "category", "link"],
+                        required=["description", "title", "source", "location", "summary", "category", "link"],
                         properties={
+                            "description": types.Schema(type="STRING"),
                             "title": types.Schema(type="STRING"),
                             "source": types.Schema(type="STRING"),
                             "location": types.Schema(type="STRING"),
                             "contact": types.Schema(type="STRING"),
-                            "description": types.Schema(type="STRING"),
                             "summary": types.Schema(type="STRING"),
                             "category": types.Schema(
                                 type="STRING",
@@ -317,7 +318,7 @@ class GeminiHandler:
             You are given a list of articles and all the related information for each.
             You write using simple terms but still in a professional way.
             Your task is to process each article and identify the components:
-            - Title: A simple coincise title that you would give to the article.
+            - Title: A simple concise title that you would give to the article.
             - Source: The source of the article.
             - Location: The location of the article. 
             -- Use 'Online' for unspecified locations

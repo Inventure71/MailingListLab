@@ -91,7 +91,7 @@ class GmailHelper:
         # Determine the actual limit to use for the API call
         # Gmail returns emails in reverse chronological order (newest first)
         api_max_results = max_results
-        if limit_newest is not None and limit_newest < max_results:
+        if limit_newest is not None and limit_newest < max_results and limit_newest > 0:
             api_max_results = limit_newest
 
         # --- date range -----------------------------------------------------

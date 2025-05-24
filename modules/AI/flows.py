@@ -123,18 +123,17 @@ def analyze_repost(parsed_mail, intensive_mode=False, include_link_info=False, i
     # concatenate parsed mail Title, text and links to a single string with good formatting
     mail_content = parsed_mail["title"] + "\n\n" + parsed_mail["text"] + "\n\n" + "\n\n".join(link_articles.values())
 
-    evaluation_response = gemini_handler.evaluate_articles_gemini(mail_content)
+    articles_response = gemini_handler.divide_news_gemini(mail_content)
+    logging.info(f"Received articles response from Gemini: {articles_response}")
     
-    # Parse JSON response
+    # Parse final response
     try:
-        evaluation_data = json.loads(evaluation_response)
-        articles = evaluation_data.get("news", [])
+        articles_data = json.loads(articles_response)
+        final_articles = articles_data.get("news", [])
+        return final_articles
     except json.JSONDecodeError as e:
         logging.error(f"Failed to parse Gemini evaluation response: {e}")
         return []
-
-    return articles
-
 
 """NEWSLETTER"""
 def analyze_emails_newsletter(emails, intensive_mode=False, include_link_info=False, include_website_news=False, include_images=False, gemini_handler=None):

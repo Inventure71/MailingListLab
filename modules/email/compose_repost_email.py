@@ -89,10 +89,26 @@ class RepostEmailGenerator:
                 <br><br>
                 <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid #cccccc;">
                     <em>This email is automatically generated.</em>
-                    <br>
-                    Your feedback is really important to improve the project, please help us improve by completing our 
-                    <a href="https://forms.gle/UegbAWJ6zEcv7yKT8" style="color: #0066cc; text-decoration: none;">feedback form</a>.
                 </div>
+            </td>
+        </tr>
+        <tr>
+            <td style="text-align: center; background-color: #e8f4fd; color: #333333; 
+                       padding: 20px; border: 2px solid #0066cc; border-radius: 8px; margin: 10px;">
+                <div style="font-size: 18px; font-weight: bold; color: #0066cc; margin-bottom: 12px;">
+                    📝 Your Feedback Matters!
+                </div>
+                <div style="font-size: 16px; line-height: 1.4; margin-bottom: 15px;">
+                    Your feedback is really important to improve the project.<br>
+                    Please help us enhance your experience by sharing your thoughts!
+                </div>
+                <a href="https://forms.gle/UegbAWJ6zEcv7yKT8" 
+                   style="display: inline-block; background-color: #0066cc; color: #ffffff; 
+                          padding: 12px 24px; font-size: 16px; font-weight: bold; 
+                          text-decoration: none; border-radius: 5px; 
+                          box-shadow: 0 2px 4px rgba(0,102,204,0.3);">
+                    Complete Feedback Form
+                </a>
             </td>
         </tr>'''
 

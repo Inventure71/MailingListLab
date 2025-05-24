@@ -273,7 +273,7 @@ def analyze_emails_newsletter(emails, intensive_mode=False, include_link_info=Fa
                 combined_content += link_header + "[Failed to scrape this link]\n"
 
     # Send to Gemini for evaluation
-    logging.info(f"Sending to Gemini for evaluation (first 500 chars): {combined_content[:500]}")
+    logging.info(f"Sending to Gemini for evaluation: {combined_content}")
     evaluation_response = gemini_handler.evaluate_articles_gemini(combined_content)
     logging.info(f"Received evaluation response from Gemini: {evaluation_response}")
     

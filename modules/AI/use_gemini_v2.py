@@ -327,6 +327,23 @@ class GeminiHandler:
             - Description: A medium-detailed description of the article.
             - Summary: Bite‑sized headline that makes you understand the general idea and vibes of the article.
             - Category: The category of the article.
+            -- News: General announcements, updates, or developments related to technology, academia, or research that do not involve a specific scheduled event or speaker.
+            --- Examples: New research lab opens, a major award granted, a report released, a partnership announced.
+            -- Talks: One-off academic or expert-led lectures, panels, seminars, or public keynotes.
+            --- Must include a speaker and a scheduled time.
+            --- Examples: Guest lecture on AI Ethics, Seminar by Prof. Smith on robotics.
+            -- Events: Multiday or large-scale organized gatherings such as conferences, symposiums, fairs, or networking meetups.
+            --- Often involve multiple speakers or sessions.
+            --- Examples: ACM Conference on HCI, International Robotics Expo.
+            -- Workshops: Hands-on, skill-focused training sessions or short courses, typically with limited participation.
+            --- Aimed at learning-by-doing.
+            --- Examples: Python for Data Analysis bootcamp, AR prototyping workshop.
+            -- Opportunity: Jobs, internships, fellowships, grants, calls for papers, or student competitions.
+            --- The item offers a chance to apply or participate in something external.
+            --- Examples: Research internship at MIT, Google Summer of Code.
+            -- Other: For articles that don’t clearly fit any of the categories above.
+            --- Use only if none of the others apply.
+            --- Examples: Miscellaneous blog posts, ambiguous updates without context or timing.
             - Link: most relevant link to the article, the one that once clicked enables the users to read the article.
             -- Include only a single authoritative link per item.
             """

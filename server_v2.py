@@ -324,6 +324,7 @@ def find_and_start_newsletter_timer():
         return
 
     try:
+        logging.info("Finding and starting newsletter timer current time: %s, config: %s", datetime.now().strftime("%Y-%m-%d %H:%M:%S"), str({"active": active, "days": days, "release_time_str": release_time_str}))
         now = datetime.now()
         today_name = now.strftime("%A")
         target_time = datetime.strptime(release_time_str, "%H:%M:%S").time()

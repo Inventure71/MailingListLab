@@ -1,3 +1,4 @@
+import logging
 import os
 import re
 import json
@@ -6,7 +7,7 @@ from time import sleep
 from datetime import datetime
 from collections import deque
 from enum import Enum
-from typing import List, Tuple, Optional
+from typing import List, Tuple, Optional, Dict
 
 from google import genai
 from google.genai import types
@@ -350,6 +351,72 @@ class GeminiHandler:
         )
         return self._news_call(prompt, schema=json_schema, system_instruction=system_instruction)
 
+    def evaluate_images_gemini(self, prompt: str, images: List[Dict[str, str]],) -> str:
+        """
+        Evaluate the images (each with its context) and return up to one
+        relevant image per article, along with that image’s context.
+        """
+        # Expect response to be an object with an array of { image: string, context: string }
+        json_schema = types.Schema(
+            type="OBJECT",
+            required=["images"],
+            properties={
+                "images": types.Schema(
+                    type="ARRAY",
+                    items=types.Schema(
+                        type="OBJECT",
+                        required=["image_path", "short_justification"],
+                        properties={
+                            "image_path": types.Schema(type="STRING"),
+                            "short_justification": types.Schema(type="STRING"),
+                        },
+                    ),
+                ),
+            },
+        )
+
+        logging.info(f"Uploading {len(images)} images with contexts")
+        uploaded_files = []
+        contexts = []
+        for item in images:
+            path = item["image_path"]
+            ctx  = item["article_id"]
+            # upload the image
+            uploaded = self.client.files.upload(file=path, purpose="ARTICLE_IMAGE")
+            uploaded_files.append(uploaded)
+            contexts.append(ctx)
+        logging.info(f"Uploaded {len(uploaded_files)} images")
+
+        # Enhance the system instruction to remind the model that each image has context
+        system_instruction = (
+            "You are in charge of creating a newsletter for a university.\n"
+            "You are given a list of images, each paired with a short context description.\n"
+            "Your task is to select at most one image per article—and for each selected image,\n"
+            "return both the image identifier and its context.\n"
+            "- Only include images that are relevant to the article.\n"
+            "- Only include images that enrich the article.\n"
+            "- You don't have to include an image for every article.\n"
+            "- If you want to include an image provide the image path and a short justification for why you chose it. If no image is relevant, return an empty array.\n"
+            "\n"
+            "Here are the image contexts (in the same order as the uploads):\n"
+            + "\n".join(f"{i+1}. {ctx}" for i, ctx in enumerate(contexts))
+        )
+
+        # Call into your wrapper; pass both the file handles and their contexts
+        response = self._news_call(
+            prompt=prompt,
+            schema=json_schema,
+            system_instruction=system_instruction,
+            uploaded_files=uploaded_files,
+            file_contexts=contexts,
+        )
+
+        logging.info(f"Deleting {len(uploaded_files)} images")
+        for f in uploaded_files:
+            self.client.files.delete(file_id=f.id)
+        logging.info("All uploaded images deleted")
+
+        return response
 
 # ---------------------------------------------------------------------
 # ▶ STAND‑ALONE TEST ---------------------------------------------------

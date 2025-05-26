@@ -16,6 +16,8 @@ from modules.utils.extract_email_address import extract_email_address
 
 # pip install -r requirements.txt
 # TODO: add google form at the end of emails to collect feedback
+# TODO: complete images implementation to newsletter and repost
+
 
 """LOGGING"""
 # create a rotating file handler that limits log file size

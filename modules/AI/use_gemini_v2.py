@@ -36,8 +36,8 @@ class GeminiHandler:
     def __init__(
         self,
         *,
-        model: str = "gemini-2.0-flash-exp",
-        rate_limit: int = 30,
+        model: str = "gemini-2.0-flash",
+        rate_limit: int = 15,
         time_window: int = 60,
         max_retries: int = 5,
         initial_retry_delay: int = 5,
@@ -163,7 +163,7 @@ class GeminiHandler:
     # ------------------------------------------------------------------
 
     @staticmethod
-    def divide_into_blocks(text: str, max_block_size: int = 2_000_000) -> List[str]:
+    def divide_into_blocks(text: str, max_block_size: int = 15_000) -> List[str]:
         """Return a list of <= `max_block_size` chunks, splitting at sentence ends when possible."""
         if len(text) <= max_block_size:
             return [text]
@@ -342,7 +342,7 @@ class GeminiHandler:
             -- Opportunity: Jobs, internships, fellowships, grants, calls for papers, or student competitions.
             --- The item offers a chance to apply or participate in something external.
             --- Examples: Research internship at MIT, Google Summer of Code.
-            -- Other: For articles that don’t clearly fit any of the categories above.
+            -- Other: For articles that don't clearly fit any of the categories above.
             --- Use only if none of the others apply.
             --- Examples: Miscellaneous blog posts, ambiguous updates without context or timing.
             - Link: most relevant link to the article, the one that once clicked enables the users to read the article.
@@ -354,7 +354,7 @@ class GeminiHandler:
     def evaluate_images_gemini(self, prompt: str, images: List[Dict[str, str]],) -> str:
         """
         Evaluate the images (each with its context) and return up to one
-        relevant image per article, along with that image’s context.
+        relevant image per article, along with that image's context.
         """
         # Expect response to be an object with an array of { image: string, context: string }
         json_schema = types.Schema(
